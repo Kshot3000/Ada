@@ -126,6 +126,8 @@
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener">$1</a>'
     );
+    s = s.replace(/\*([^*\n]+)\*/g, "<em>$1</em>"); // *italic* (after **bold** is consumed)
+    s = s.replace(/^- /gm, "   \u2022 ");               // "- " list lines → hanging bullets
     s = s.replace(/\n/g, "<br>");
     return s;
   }
@@ -515,6 +517,16 @@
       addMsg("ada", "`" + text + "` = **" + math + "**");
       return Promise.resolve();
     }
+    /* Offline knowledge base (js/knowledge.js) — scored keyword matching
+       over the ecosystem sources: cardano.org, Midnight, Minswap,
+       SundaeSwap, cardano-node, Input Output, Cardano Foundation. */
+    if (window.ADA_KB && typeof window.ADA_KB.ask === "function") {
+      var kbHit = window.ADA_KB.ask(text);
+      if (kbHit) {
+        addMsg("ada", kbHit);
+        return Promise.resolve();
+      }
+    }
     var low = text.toLowerCase();
     for (var i = 0; i < TOPICS.length; i++) {
       if (TOPICS[i].re.test(low)) {
@@ -537,7 +549,8 @@
     addMsg(
       "ada",
       "That one's beyond my offline brain. I'm running **Local Ada** right now — a built-in knowledge base with no API key. \n\n" +
-        "Two options:\n1. Try the commands: `help` · `cardano` · `staking` · `price` · `donate`\n2. Switch me to a real model — open the **API** panel, pick a provider (Google, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, and more), add a free key, and I'm online."
+        "But I know a lot about the ecosystem — try asking about **staking, epochs, governance, Midnight, Minswap, SundaeSwap, Plutus, cardano-node, Input Output**, or **how to get started** (or run `knowledge` for the full list).\n\n" +
+        "For anything else:\n1. Try the commands: `help` · `cardano` · `price` · `donate`\n2. Switch me to a real model — open the **API** panel, pick a provider (Google, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, and more), add a free key, and I'm online."
     );
     return Promise.resolve();
   }
@@ -565,6 +578,7 @@
           "`help` — this list\n" +
           "`about` — who I am\n" +
           "`cardano` — the blockchain in 30 seconds\n" +
+          "`knowledge` — everything my offline brain covers\n" +
           "`price` — live ADA/USD (CoinGecko)\n" +
           "`donate` — Cardano donation address + QR\n" +
           "`x` — the builder's X account\n" +
@@ -582,6 +596,16 @@
     },
     cardano: function () {
       addMsg("ada", CARDANO_MD);
+    },
+    knowledge: function () {
+      addMsg(
+        "ada",
+        "**What I know offline** — no API key needed, all in this browser:\n\n" +
+          "**The chain** — Cardano · ADA (45B cap, lovelaces) · Ouroboros consensus · staking & SPOs · epochs & slots · eras (Byron→Conway) · EUTXO · Plutus & Aiken smart contracts · wallets (Lace, Yoroi, Daedalus, EternL) · Hydra & Leios scaling · IBC bridges (Injective, Pogun) · security model.\n\n" +
+          "**The ecosystem** — Midnight (NIGHT, DUST, Compact, selective disclosure) · Minswap (DEX, MIN) · SundaeSwap (liquid staking, SUNDAE) · DeFi · DReps & on-chain governance.\n\n" +
+          "**The builders** — cardano-node & Intersect · Input Output (IOG) · Cardano Foundation · Charles Hoskinson.\n\n" +
+          "Just ask in plain English — e.g. *what is Midnight?* · *how do I run a node?* · *what is SundaeSwap?*"
+      );
     },
     price: function () {
       return fetchPrice().then(function (p) {
@@ -674,7 +698,7 @@
     },
   };
 
-  var COMMAND_NAMES = ["help", "about", "cardano", "price", "donate", "donation", "address", "wallet", "x", "twitter", "follow", "github", "source", "status", "provider", "key", "model", "clear"];
+  var COMMAND_NAMES = ["help", "about", "cardano", "knowledge", "price", "donate", "donation", "address", "wallet", "x", "twitter", "follow", "github", "source", "status", "provider", "key", "model", "clear"];
   function isCommand(text) {
     var first = String(text).trim().toLowerCase().split(/\s+/)[0];
     return COMMAND_NAMES.indexOf(first) !== -1;

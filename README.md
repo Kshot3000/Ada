@@ -88,6 +88,22 @@ Notes:
 - If no speech engine is installed, Ada falls back to a simulated talking motion — everything else keeps working.
 - Honors `prefers-reduced-motion`: the face renders one calm static frame and the rain stands still, while all chat and voice logic works unchanged.
 
+## Ada's offline knowledge base
+
+Ada's local brain (no API key, no network) is backed by **`js/knowledge.js`** — a scored keyword knowledge base distilled from the ecosystem's own sources, so she keeps answering even fully offline:
+
+| Topic | Source |
+|---|---|
+| Cardano, Ouroboros, staking, epochs, ADA supply, eras, EUTXO | [cardano.org](https://cardano.org/) · [developers.cardano.org](https://developers.cardano.org) |
+| Midnight — NIGHT, DUST, Compact, selective disclosure | [midnight.network](https://midnight.network/) · [github.com/midnightntwrk](https://github.com/midnightntwrk) |
+| Minswap DEX, MIN staking, pool data | [minswap.org](https://minswap.org) · [github.com/minswap](https://github.com/minswap) |
+| SundaeSwap DEX + liquid staking (SUNDAE) | [sundae.fi](https://sundae.fi) · [github.com/SundaeSwap-finance](https://github.com/SundaeSwap-finance) |
+| cardano-node, Intersect, mainnet/preprod/preview | [github.com/IntersectMBO/cardano-node](https://github.com/IntersectMBO/cardano-node) |
+| Input Output (IOG), Hoskinson, Hydra, Leios | [iohk.io](https://iohk.io) · [github.com/input-output-hk](https://github.com/input-output-hk) |
+| Cardano Foundation, cardano-wallet, IBC relayer | [github.com/cardano-foundation](https://github.com/cardano-foundation) |
+
+In chat: `knowledge` prints the full coverage list, or just ask — *what is Midnight?* · *how do I run a node?* · *what is SundaeSwap?*
+
 ## Commands
 
 | Command | What it does |
@@ -95,6 +111,7 @@ Notes:
 | `help` | Full command list |
 | `about` | Who Ada is |
 | `cardano` | Cardano in 30 seconds |
+| `knowledge` | What Ada's offline brain covers |
 | `price` | Live ADA/USD + EUR + 24h change (CoinGecko) |
 | `donate` | Cardano donation address + CardanoScan link |
 | `x` / `twitter` / `follow` | Builder's X account |
@@ -128,6 +145,7 @@ Ada/
     ├── config.js       # ← EDIT ME: X, donation, provider presets
     ├── face.js         # Ada's portrait: hair, face, emotions, blink, gaze, talking
     ├── background.js   # Matrix-style binary rain (canvas)
+    ├── knowledge.js    # offline Cardano knowledge base (no API, no network)
     ├── ada.js          # agent core: chat, providers, streaming, commands, voice
     └── vendor/qrcode.js# vendored QR generator (MIT, Kazuhiko Arase)
 ```
