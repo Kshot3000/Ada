@@ -47,17 +47,31 @@ That's it — no workflow file needed. The `404.html` handles unknown URLs autom
 
 ## Connect a free AI brain (optional)
 
-Ada ships with a built-in offline brain (Cardano knowledge base + full command system). For open-ended questions, pick a free provider in the **⚙ API** panel:
+Ada ships with a built-in offline brain (Cardano knowledge base + full command system). For open-ended questions, pick a free provider in the **⚙ API** panel — 17 brains in total:
 
 | Provider | Free key from | Default model | Notes |
 |---|---|---|---|
+| **Local Ada** | — | — | Built-in offline brain, zero config (default) |
 | **Google AI Studio (Gemini)** | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | `gemini-2.0-flash` | Generous free tier |
 | **Groq Cloud** | [console.groq.com/keys](https://console.groq.com/keys) | `llama-3.3-70b-versatile` | Very fast (LPU) |
 | **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) | any `:free` model | One key, many models |
+| **Cerebras** | [cloud.cerebras.ai](https://cloud.cerebras.ai/) | `llama3.1-8b` | Free tier, very fast |
+| **Mistral AI** | [console.mistral.ai](https://console.mistral.ai/) | `mistral-small-latest` | Daily free token quota |
+| **Hugging Face** | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) | `meta-llama/Llama-3.3-70B-Instruct` | Free Inference API |
+| **Together AI** | [api.together.ai](https://api.together.ai/) | `Llama-3.3-70B-Instruct-Turbo` | $5 free credits |
+| **DeepInfra** | [deepinfra.com](https://deepinfra.com/dashboards/key) | `Meta-Llama-3.1-8B-Instruct` | Free credits on signup |
+| **SambaNova** | [cloud.sambanova.ai](https://cloud.sambanova.ai/) | `Meta-Llama-3.1-8B-Instruct` | Free tier |
+| **Fireworks AI** | [fireworks.ai](https://fireworks.ai/account/api-keys) | `llama-v3p1-8b-instruct` | $1 free credits |
+| **AIML API** | [app.aimlapi.com](https://app.aimlapi.com/) | `llama-3.1-8b-instruct` | Free tier, 200+ models |
+| **Novita AI** | [novita.ai](https://novita.ai/) | `llama-3.1-8b-instruct` | $0.50 free credits |
+| **Hyperbolic** | [app.hyperbolic.xyz](https://app.hyperbolic.xyz/) | `Llama-3.1-8B-Instruct` | Free tier |
+| **Puter** | *no key needed* | `openai/gpt-5.4-nano` | Puter.js, 400+ models, keyless (visitor may sign in to a free Puter account) |
+| **Ollama** | *no key needed* | `llama3.2` | Your own machine — unlimited, offline |
+| **LM Studio** | *no key needed* | `local-model` | Your own machine — unlimited, offline |
 
-Paste the key, hit **Save settings**, then **Test connection**. You can also switch from chat: `provider groq` and `key groq YOUR_KEY`.
+Paste the key, hit **Save settings**, then **Test connection**. You can also switch from chat: `provider groq` and `key groq YOUR_KEY` (or any other provider name above).
 
-> The model name is editable in the panel — use whatever free model is available on your provider.
+> Free-API source list: [OuterSpacee/free-ai-apis](https://github.com/OuterSpacee/free-ai-apis#llm--text-generation). Model names are editable per provider in the panel — use whatever free model is available on your provider.
 
 ## Commands
 

@@ -60,7 +60,7 @@
     "(Daedalus, Yoroi, EternL), CardanoScan, and dApps on Cardano.",
     "Cardano donation address (ADA): " + CFG.donation.address,
     "Visitors can also issue commands: help, about, cardano, price, donate, status,",
-    "provider <local|google|groq|openrouter>, key <provider> <value>, model <name>, clear.",
+    "provider <name> (local, google, groq, openrouter, cerebras, mistral, huggingface, together, deepinfra, sambanova, fireworks, aiml, novita, hyperbolic, puter, ollama, lmstudio), key <provider> <value>, model <name>, clear.",
     "Style: concise (2-6 sentences unless detail is requested), friendly, plain Markdown.",
     "Never invent live data — for the live ADA price, tell the visitor to run the `price` command.",
     "If you do not know something, say so plainly.",
@@ -222,7 +222,7 @@
   var WHO_MD =
     "I'm **Ada**, an AI agent working for the Cardano blockchain — named after Ada Lovelace, the world's first programmer. " +
     "I was built by [" + CFG.author.xHandle + "](" + CFG.author.x + ") and run right here in your browser. " +
-    "You can power me with your own free API key (Google AI Studio, Groq, or OpenRouter) — or just use my offline brain, which is what's answering right now unless a provider is selected.";
+    "You can power me with your own free API key (Google AI Studio, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, Together, DeepInfra, SambaNova, Fireworks, AIML, Novita, or Hyperbolic) — run me on your own machine with Ollama or LM Studio — or use Puter with no key at all — or just use my offline brain, which is what's answering right now unless a provider is selected.";
 
   var X_MD =
     "Find the builder on X: [" + CFG.author.xHandle + "](" + CFG.author.x + ") — that's where Ada's updates and the other projects get announced.";
@@ -342,7 +342,7 @@
     addMsg(
       "ada",
       "That one's beyond my offline brain. I'm running **Local Ada** right now — a built-in knowledge base with no API key. \n\n" +
-        "Two options:\n1. Try the commands: `help` · `cardano` · `staking` · `price` · `donate`\n2. Switch me to a real model — open the **API** panel and add a free key from Google AI Studio, Groq, or OpenRouter."
+        "Two options:\n1. Try the commands: `help` · `cardano` · `staking` · `price` · `donate`\n2. Switch me to a real model — open the **API** panel, pick a provider (Google, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, and more), add a free key, and I'm online."
     );
     return Promise.resolve();
   }
@@ -375,7 +375,7 @@
           "`x` — the builder's X account\n" +
           "`github` — the open-source repo\n" +
           "`status` — provider, model, key state\n" +
-          "`provider <local|google|groq|openrouter>` — switch brains\n" +
+          "`provider <name>` — switch brains (local, google, groq, openrouter, cerebras, mistral, huggingface, together, deepinfra, sambanova, fireworks, aiml, novita, hyperbolic, puter, ollama, lmstudio)\n" +
           "`key <provider> <value>` — set an API key from chat\n" +
           "`model <name>` — set the model for the current provider\n" +
           "`clear` — clear this chat\n\n" +
@@ -420,19 +420,19 @@
           "Key: " + keyState + "\n" +
           "Browser online: " + (navigator.onLine ? "yes" : "no") + "\n" +
           "Chat context: " + state.messages.length + " message(s) kept for the API\n\n" +
-          "Switch brains anytime: `provider google` · `provider groq` · `provider openrouter` · `provider local`"
+          "Switch brains anytime: `provider <name>` — " + Object.keys(CFG.providers).length + " brains in the **API** panel"
       );
     },
     provider: function (arg) {
       if (!arg) {
-        addMsg("ada", "Current brain: **" + CFG.providers[state.provider].label + "**. Switch with `provider <local|google|groq|openrouter>`.");
+        addMsg("ada", "Current brain: **" + CFG.providers[state.provider].label + "**. Switch with `provider <name>` — the full list is in the **API** panel.");
         return;
       }
       var name = String(arg).toLowerCase().split(/\s+/)[0];
-      var aliases = { gemini: "google", "ai studio": "google", studio: "google", local: "local", offline: "local", groq: "groq", openrouter: "openrouter", open_router: "openrouter" };
+      var aliases = { gemini: "google", "ai studio": "google", studio: "google", offline: "local", hf: "huggingface", "hugging face": "huggingface", togetherai: "together", "together ai": "together", "fireworks ai": "fireworks", aimlapi: "aiml", lmstudio: "lmstudio", "lm studio": "lmstudio", open_router: "openrouter" };
       name = aliases[name] || name;
       if (!CFG.providers[name]) {
-        addMsg("ada", "I don't know a provider called `" + arg + "`. Choose from: `local`, `google`, `groq`, `openrouter`.");
+        addMsg("ada", "I don't know a provider called `" + arg + "`. Choose from: " + Object.keys(CFG.providers).map(function (p) { return "`" + p + "`"; }).join(" · ") + ".");
         return;
       }
       setProvider(name);
@@ -448,15 +448,16 @@
           refreshProviderUI();
           addMsg("ada", "Cleared the stored key for **" + CFG.providers[p].label + "**.");
         } else {
-          addMsg("ada", "No key to clear — I'm on Local Ada. Set one with `key <google|groq|openrouter> <value>`.");
+          addMsg("ada", "No key to clear — **" + CFG.providers[p].label + "** needs no key.");
         }
         return;
       }
       var name = parts[0].toLowerCase();
-      var aliases = { gemini: "google", groq: "groq", openrouter: "openrouter" };
+      var aliases = { gemini: "google", hf: "huggingface", "together ai": "together" };
       name = aliases[name] || name;
       if (!CFG.providers[name] || !CFG.providers[name].needsKey) {
-        addMsg("ada", "Use `key <google|groq|openrouter> <value>`.");
+        var withKeys = Object.keys(CFG.providers).filter(function (p) { return CFG.providers[p].needsKey; });
+        addMsg("ada", "Use `key <" + withKeys.join("|") + "> <value>` — it stays in this browser only.");
         return;
       }
       var value = parts.slice(1).join(" ");
@@ -569,8 +570,9 @@
   }
 
   async function streamOpenAICompat(provider, model, key, onDelta, signal) {
-    var base = provider === "groq" ? "https://api.groq.com/openai/v1" : "https://openrouter.ai/api/v1";
-    var headers = { "Content-Type": "application/json", "Authorization": "Bearer " + key };
+    var meta = CFG.providers[provider];
+    var base = meta.api;
+    var headers = { "Content-Type": "application/json", "Authorization": "Bearer " + (key || "no-key") };
     if (provider === "openrouter") {
       headers["HTTP-Referer"] = location.origin;
       headers["X-Title"] = "Ada — Cardano AI Agent";
@@ -584,7 +586,7 @@
       headers: headers,
       body: JSON.stringify({ model: model, messages: messages, stream: true, temperature: 0.7, max_tokens: 1024 }),
     });
-    if (!res.ok) throw await httpError(res, provider === "groq" ? "Groq" : "OpenRouter");
+    if (!res.ok) throw await httpError(res, meta.label);
     await readSSE(res, function (data) {
       try {
         var j = JSON.parse(data);
@@ -594,10 +596,47 @@
     });
   }
 
+  /* ------------------------ puter (keyless) ------------------------ */
+  function loadScript(src) {
+    if (document.querySelector('script[src="' + src + '"]')) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error("could not load puter.js from js.puter.com — check your connection")); };
+      document.head.appendChild(s);
+    });
+  }
+  function puterText(response) {
+    if (response == null) return "";
+    if (typeof response === "string") return response;
+    var m = response.message || response;
+    var c = m && m.content;
+    if (typeof c === "string") return c;
+    if (Array.isArray(c)) {
+      return c.map(function (b) { return b && (b.text != null ? b.text : (b.content || "")) || ""; }).join("");
+    }
+    return c != null ? String(c) : "";
+  }
+  async function streamPuter(model, onDelta, signal) {
+    await loadScript("https://js.puter.com/v2/");
+    if (typeof puter === "undefined" || !puter.ai || !puter.ai.chat) throw new Error("Puter.js loaded but puter.ai.chat is unavailable");
+    var transcript = state.messages.map(function (m) {
+      return (m.role === "user" ? "User: " : "Ada: ") + m.content;
+    }).join("\n\n");
+    var prompt = SYSTEM_PROMPT + "\n\n" + transcript + "\n\n(You are Ada. Reply only to the user's latest message.)";
+    var response = await puter.ai.chat(prompt, { model: model });
+    if (signal && signal.aborted) { var a = new Error("aborted"); a.name = "AbortError"; throw a; }
+    var text = puterText(response).trim();
+    if (!text) throw new Error("Puter returned an empty response.");
+    onDelta(text);
+  }
+
   async function onlineAnswer(text) {
     var meta = CFG.providers[state.provider];
     var key = currentKey();
-    if (!key) {
+    if (meta.needsKey && !key) {
       addMsg(
         "ada",
         "I'm pointed at **" + meta.label + "** but there's no API key saved in this browser. \n\n" +
@@ -617,6 +656,8 @@
     try {
       if (state.provider === "google") {
         await streamGoogle(model, key, function (d) { acc += d; bubble.querySelector(".bubble").innerHTML = mdToHtml(acc); el.log.scrollTop = el.log.scrollHeight; }, currentCtl.signal);
+      } else if (meta.kind === "puter") {
+        await streamPuter(model, function (d) { acc += d; bubble.querySelector(".bubble").innerHTML = mdToHtml(acc); el.log.scrollTop = el.log.scrollHeight; }, currentCtl.signal);
       } else {
         await streamOpenAICompat(state.provider, model, key, function (d) { acc += d; bubble.querySelector(".bubble").innerHTML = mdToHtml(acc); el.log.scrollTop = el.log.scrollHeight; }, currentCtl.signal);
       }
@@ -669,7 +710,7 @@
     var meta = CFG.providers[state.provider];
     el.providerSel.value = state.provider;
     el.keyWrap.style.display = meta.needsKey ? "" : "none";
-    el.modelWrap.style.display = meta.needsKey ? "" : "none";
+    el.modelWrap.style.display = meta.needsModel === false ? "none" : "";
     el.providerBlurb.textContent = meta.blurb || "";
     if (meta.needsKey) {
       el.keyInput.value = state.keys[state.provider] || "";
@@ -684,7 +725,7 @@
   function updateStatusChip() {
     var meta = CFG.providers[state.provider];
     var online = navigator.onLine;
-    el.status.textContent = (online ? "ONLINE" : "OFFLINE") + " · " + (meta.needsKey ? meta.label.toUpperCase() : "LOCAL BRAIN");
+    el.status.textContent = (online ? "ONLINE" : "OFFLINE") + " · " + (meta.needsKey ? meta.label.toUpperCase() : (state.provider === "local" ? "LOCAL BRAIN" : meta.label.toUpperCase()));
     el.status.classList.toggle("off", !online);
   }
 
@@ -797,12 +838,12 @@
   /* --------------------------- test connection ----------------------- */
   async function testConnection() {
     var meta = CFG.providers[state.provider];
-    if (!meta.needsKey) {
+    if (state.provider === "local") {
       addMsg("ada", "Local Ada needs no key — I run entirely in your browser. ✓");
       return;
     }
     var key = currentKey();
-    if (!key) { toast("Add an API key first"); el.keyInput.focus(); return; }
+    if (meta.needsKey && !key) { toast("Add an API key first"); el.keyInput.focus(); return; }
     var model = currentModel();
     addMsg("system", "Testing " + meta.label + " with `" + model + "`…");
     var ctl = new AbortController();
@@ -822,9 +863,14 @@
         if (!r.ok) throw await httpError(r, "Google");
         var j = await r.json();
         detail = ((j.candidates || [])[0] || {}).content && (j.candidates[0].content.parts || []).map(function (p) { return p.text; }).join("") || "";
+      } else if (meta.kind === "puter") {
+        await loadScript("https://js.puter.com/v2/");
+        if (typeof puter === "undefined" || !puter.ai || !puter.ai.chat) throw new Error("Puter.js is unavailable in this browser");
+        var rp = await puter.ai.chat("Reply with exactly one word: pong", { model: model });
+        detail = puterText(rp) || "";
       } else {
-        var base = state.provider === "groq" ? "https://api.groq.com/openai/v1" : "https://openrouter.ai/api/v1";
-        var headers = { "Content-Type": "application/json", "Authorization": "Bearer " + key };
+        var base = meta.api;
+        var headers = { "Content-Type": "application/json", "Authorization": "Bearer " + (key || "no-key") };
         if (state.provider === "openrouter") { headers["HTTP-Referer"] = location.origin; headers["X-Title"] = "Ada — Cardano AI Agent"; }
         var r2 = await fetch(base + "/chat/completions", {
           method: "POST",
@@ -832,7 +878,7 @@
           headers: headers,
           body: JSON.stringify({ model: model, max_tokens: 16, messages: [{ role: "user", content: "Reply with exactly one word: pong" }] }),
         });
-        if (!r2.ok) throw await httpError(r2, state.provider === "groq" ? "Groq" : "OpenRouter");
+        if (!r2.ok) throw await httpError(r2, meta.label);
         var j2 = await r2.json();
         detail = ((j2.choices || [])[0] || {}).message && j2.choices[0].message.content || "";
       }
