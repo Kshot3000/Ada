@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ada — AI Agent for the Cardano Blockchain</title>
+  <meta name="description" content="Ada is an AI agent working for the Cardano blockchain. Ask her questions, run commands, and support the projects behind her with ADA. White and blue, zero server, runs in your browser.">
+  <meta name="theme-color" content="#0033AD">
+  <meta property="og:title" content="Ada — AI Agent for the Cardano Blockchain">
+  <meta property="og:description" content="Ask Ada anything about Cardano. Live in your browser, powered by free AI APIs or her built-in offline brain.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- the bittensor-style moving structure (white + Cardano blue) -->
+  <canvas id="ada-bg" aria-hidden="true"></canvas>
+
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span class="brand-text">ADA<em>Cardano AI Agent</em></span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="#agent">Agent</a>
+        <a href="#support">Support</a>
+        <a class="ext" id="x-link" href="https://x.com/kshot9000" target="_blank" rel="noopener">X ↗</a>
+        <a class="ext" id="gh-link" href="https://github.com/Kshot3000" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- ============ HERO ============ -->
+      <section class="hero">
+        <span class="kicker">Cardano Blockchain · Proof of Stake · Proof of Agent</span>
+        <h1>Ada, the <span class="blue">Cardano agent</span></h1>
+        <p class="lede">
+          An AI agent working for the Cardano blockchain. Ask her about EUTXO, staking,
+          Midnight, or anything else — she answers in your browser, powered by free AI
+          APIs or her built-in offline brain.
+        </p>
+        <div class="hero-chips">
+          <span class="chip" id="status-chip"><span class="dot"></span>BOOTING…</span>
+          <span class="chip" id="price-chip">ADA —</span>
+        </div>
+      </section>
+
+      <!-- ============ CHAT CONSOLE (below the agent UI) ============ -->
+      <section class="console" id="agent" aria-label="Ada chat console">
+        <div class="console-head">
+          <div class="console-id">
+            <span class="avatar" aria-hidden="true">A</span>
+            <div>
+              <strong>Ada</strong>
+              <small id="console-sub">Local Ada · offline brain</small>
+            </div>
+          </div>
+          <div class="console-actions">
+            <select id="provider-select" aria-label="AI provider"></select>
+            <button class="ghost" id="settings-toggle" aria-expanded="false" aria-controls="settings-panel">⚙ API</button>
+            <button class="ghost" id="clear-btn">Clear</button>
+          </div>
+        </div>
+
+        <div class="settings" id="settings-panel" role="region" aria-label="API settings">
+          <div class="settings-grid">
+            <div class="settings-blurb" id="provider-blurb"></div>
+            <div class="field" id="key-wrap">
+              <label for="key-input">API key <a class="link" id="key-link" href="#" target="_blank" rel="noopener">Get a free key →</a></label>
+              <input type="password" id="key-input" autocomplete="off" spellcheck="false" placeholder="Paste your API key — stays in this browser only">
+            </div>
+            <div class="field" id="model-wrap">
+              <label for="model-input">Model</label>
+              <input type="text" id="model-input" autocomplete="off" spellcheck="false" placeholder="model name">
+            </div>
+            <div class="settings-actions">
+              <button id="save-btn">Save settings</button>
+              <button class="ghost" id="test-btn">Test connection</button>
+            </div>
+            <div class="privacy-note">
+              🔒 No server, no tracking. Keys are stored only in this browser (localStorage)
+              and sent directly to the provider you pick.
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-log" id="chat-log" aria-live="polite"></div>
+
+        <div class="input-row">
+          <textarea id="chat-input" rows="1" placeholder="Ask Ada a question, or type a command — try `help`" aria-label="Message Ada"></textarea>
+          <button id="send-btn">Send</button>
+        </div>
+        <div class="input-hint">
+          Commands: <code>help</code> <code>price</code> <code>donate</code>
+          <code>provider google</code> <code>status</code> · Enter to send · Shift+Enter for a new line
+        </div>
+      </section>
+
+      <!-- ============ SUPPORT / DONATE ============ -->
+      <section class="support" id="support">
+        <div class="section-head">
+          <h2>Support Ada</h2>
+          <p>
+            Ada and the projects behind her are free and open source. If she earns a place
+            in your bookmarks, a tip in ADA keeps the blue lights on.
+          </p>
+        </div>
+        <div class="support-card">
+          <div class="qr-box" id="qr-box" aria-hidden="true"></div>
+          <div>
+            <span class="don-chain">₳ Cardano · ADA</span>
+            <code class="don-addr" id="don-addr"></code>
+            <div class="don-actions">
+              <button id="copy-addr">Copy address</button>
+              <a class="ghost" id="don-view" href="https://cardanoscan.io" target="_blank" rel="noopener">View on CardanoScan ↗</a>
+            </div>
+            <p class="don-note">
+              Scan the QR with any Cardano wallet (Yoroi, Daedalus, EternL) or copy the
+              address. Same wallet used across <strong>@kshot9000</strong>'s other projects.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="f-links">
+        <a id="x-link-2" href="https://x.com/kshot9000" target="_blank" rel="noopener">X · @kshot9000</a>
+        <a id="gh-link-2" href="https://github.com/Kshot3000" target="_blank" rel="noopener">GitHub · Kshot3000</a>
+      </div>
+      Ada — AI Agent for the Cardano Blockchain · Built by
+      <a id="x-link-3" href="https://x.com/kshot9000" target="_blank" rel="noopener">@kshot9000</a>
+      · <span data-year>2026</span> · White &amp; blue, as Cardano intended 🧊
+    </footer>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/ada.js"></script>
+</body>
+</html>
