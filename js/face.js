@@ -1,11 +1,13 @@
 /* ============================================================
-   ADA — face: the particle head
-   A procedural 3D point-cloud head (cranium, face, neck, eyes,
-   brows, nose, mouth) rendered on canvas 2D — blue dots on
-   white, bittensor-style. She blinks, watches the cursor,
+   ADA — face: a detailed vector portrait (v2)
+   A procedural woman — long layered hair, expressive eyes with
+   lashes, brows, nose, full lips, blush, earrings, neck and
+   shoulders — drawn with canvas bezier paths in white + Cardano
+   blue only, on top of the Matrix rain (background.js). Bittensor
+   energy particles orbit her. She blinks, watches the cursor,
    talks, and shows emotion. Zero dependencies.
 
-   Public API: window.AdaFace
+   Public API (unchanged from v1 — ada.js depends on it):
      .setEmotion(name)  — neutral|happy|excited|sad|surprised|
                           thinking|talking|listening|confused
      .getEmotion()      — current emotion name
@@ -28,17 +30,33 @@
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* --------------------------- palette --------------------------- */
-  /* inverted: white face on Cardano blue */
-  var C_BODY = "213, 226, 255"; // #D5E2FF pale blue (head bulk)
-  var C_NEAR = "255, 255, 255"; // white (front dots — brightest)
-  var C_FEAT = "255, 255, 255"; // white features (brows/iris/nose)
-  var C_DEEP = "2, 18, 74";     // #02124A deep blue (pupil/mouth)
-  var C_SKIN = "4, 26, 96";     // #041A60 blue eye sockets
+  /* white + Cardano blues only */
+  var SKIN_A = "255, 255, 255";      // skin highlight
+  var SKIN_B = "216, 230, 255";      // skin shade (light periwinkle)
+  var SKIN_C = "186, 206, 252";      // deeper skin shade (neck bottom)
+  var HAIR_A = "182, 208, 255";      // back hair top
+  var HAIR_B = "112, 152, 255";      // back hair bottom
+  var BANG_A = "172, 200, 255";      // front hair top
+  var BANG_B = "102, 146, 255";      // front hair bottom
+  var STRAND_A = "180, 206, 255";    // side strand top
+  var STRAND_B = "106, 148, 255";    // side strand bottom
+  var TOP_A = "212, 230, 255";       // shirt top
+  var TOP_B = "128, 164, 255";       // shirt bottom
+  var LIP_A = "122, 146, 238";       // upper lip
+  var LIP_B = "94, 118, 222";        // lower lip
+  var BROW = "64, 98, 218";          // brows (read on the white face)
+  var INK = "14, 32, 104";           // lash line / pupil ring
+  var PUPIL = "8, 20, 76";           // pupil
+  var IRIS_A = "172, 202, 255";      // iris centre
+  var IRIS_B = "52, 92, 232";        // iris edge
+  var SHADOW = "142, 170, 238";      // soft shading lines
+  var MOUTH_IN = "10, 24, 86";       // open mouth interior
+  var BLUSH = "178, 203, 255";       // cheek blush
 
   /* ------------------------ emotion table ------------------------ */
-  /* brow: raise (−..+), browTilt: inner-up (sad) / inner-down (angry)
+  /* brow: raise (−..+), browTilt: inner-up (sad) / inner-down
      eyeOpen, mouthCurve (+ smile / − frown), mouthOpen,
-     tiltX: head tilt, look: gaze shift (− left .. + right) */
+     tiltX: head tilt, look: gaze bias (− left .. + right) */
   var EMOTIONS = {
     neutral:   { brow: 0.0,  browTilt: 0.0,  eyeOpen: 1.0,  mouthCurve: 0.12, mouthOpen: 0.0,  tiltX: 0.0,    look: 0.0 },
     happy:     { brow: 0.55, browTilt: 0.2,  eyeOpen: 0.9,  mouthCurve: 0.95, mouthOpen: 0.15, tiltX: 0.06,   look: 0.0 },
@@ -67,86 +85,177 @@
   var gazeXT = 0, gazeYT = 0;
   var W = 0, H = 0, DPR = 1, CX = 0, CY = 0, R = 100;
   var rafId = 0, last = 0;
+  var parts = [];          // orbiting energy particles {a, rx, ry, sz, sp, tw, front, col}
 
-  var dots = []; // {x,y,z, kind, tw (twinkle phase), big}
-
-  /* ------------------------- geometry build ---------------------- */
-  function push(x, y, z, kind) {
-    dots.push({
-      x: x, y: y, z: z, kind: kind,
-      tw: Math.random() * 6.283,
-      big: 0.9 + Math.random() * 0.9,
-    });
-  }
-
-  function fibSphere(n, cx, cy, cz, sx, sy, sz, filter, kind) {
-    var golden = Math.PI * (3 - Math.sqrt(5));
-    for (var i = 0; i < n; i++) {
-      var y = 1 - (i / (n - 1)) * 2;      // 1 .. -1
-      var rad = Math.sqrt(Math.max(0, 1 - y * y));
-      var th = golden * i;
-      var lx = Math.cos(th) * rad;
-      var ly = y;
-      var lz = Math.sin(th) * rad;
-      if (filter && !filter(lx, ly, lz)) continue;
-      var px = cx + lx * sx;
-      var py = cy + ly * sy;
-      var pz = cz + lz * sz;
-      // jaw taper: pull the lower-front in toward a chin
-      if (py < -0.18 && pz > 0.08) {
-        var k = Math.min(1, (-0.18 - py) / 1.0);
-        px *= 1 - 0.50 * k * k;
-        pz += 0.16 * k * k;
-      }
-      push(px, py, pz, kind);
+  /* ------------------------- particle field ---------------------- */
+  function buildParticles() {
+    parts = [];
+    for (var i = 0; i < 96; i++) {
+      var white = Math.random() < 0.62;
+      parts.push({
+        a: Math.random() * 6.2832,
+        rx: 1.18 + Math.random() * 0.42, // 1.18..1.60
+        ry: 1.28 + Math.random() * 0.42, // 1.28..1.70
+        sz: 0.010 + Math.random() * 0.016,
+        sp: (Math.random() - 0.5) * 0.16,
+        tw: Math.random() * 6.2832,
+        front: Math.random() < 0.22,
+        col: white ? "255, 255, 255" : "168, 196, 255",
+      });
     }
   }
 
-  function disc(cx, cy, cz, rx, ry, n, kind) {
-    for (var i = 0; i < n; i++) {
-      var a = (i / n) * 6.2832 + Math.random() * 0.5;
-      var r = 0.25 + 0.75 * Math.sqrt(Math.random());
-      push(cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r, cz, kind);
-    }
+  /* --------------------------- helpers --------------------------- */
+  function rgba(c, a) {
+    return "rgba(" + c + "," + Math.max(0, Math.min(1, a)).toFixed(3) + ")";
+  }
+  function grad(x0, y0, x1, y1, c0, c1) {
+    var g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, c0);
+    g.addColorStop(1, c1);
+    return g;
+  }
+  function trace(pathFn) {
+    ctx.beginPath();
+    pathFn();
+  }
+  function fillPath(pathFn, style) {
+    ctx.fillStyle = style;
+    trace(pathFn);
+    ctx.fill();
+  }
+  function strokePath(pathFn, style, width, alpha) {
+    ctx.strokeStyle = style;
+    ctx.lineWidth = width;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    if (alpha !== undefined) ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    trace(pathFn);
+    ctx.stroke();
+    if (alpha !== undefined) ctx.globalAlpha = 1;
+  }
+  function ovalPath(cx, cy, rx, ry) {
+    return function () {
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, 6.2832);
+    };
   }
 
-  function build() {
-    dots = [];
-    // cranium + face (one deformed sphere, jaw taper applied)
-    fibSphere(560, 0, 0.10, -0.06, 0.78, 1.04, 0.90,
-      function (lx, ly) { return true; }, "head");
-    // back-of-head density
-    fibSphere(160, 0, 0.14, -0.16, 0.70, 0.97, 0.85,
-      function (lx, ly, lz) { return lz < -0.1; }, "head");
-    // neck
-    for (var i = 0; i < 120; i++) {
-      var a = Math.random() * 6.2832;
-      var yy = -0.92 - Math.random() * 0.32;
-      var rr = 0.30 + Math.random() * 0.07;
-      push(Math.cos(a) * rr, yy, -0.10 + Math.sin(a) * rr * 0.8, "neck");
-    }
-    // eyes (sclera / iris / pupil)
-    for (var s = -1; s <= 1; s += 2) {
-      disc(s * 0.29, 0.13, 0.71, 0.125, 0.092, 14, "sclera");
-      disc(s * 0.29, 0.13, 0.748, 0.062, 0.048, 12, "iris");
-      push(s * 0.29, 0.13, 0.758, "pupil");
-      // brow arc (9 points, angle applied at render time)
-      for (var b = 0; b < 9; b++) {
-        var t = b / 8 * 2 - 1; // -1..1
-        push(s * (0.16 + 0.30 * Math.abs(t)), 0.37, 0.68 + 0.05 * (1 - t * t), "brow");
-      }
-    }
-    // nose
-    push(0, 0.08, 0.86, "nose");
-    push(0, 0.0, 0.90, "nose");
-    push(0, -0.08, 0.93, "nose");
-    push(-0.05, -0.12, 0.89, "nose");
-    push(0.05, -0.12, 0.89, "nose");
-    // mouth (12 lip points, curve + open applied at render time)
-    for (var m = 0; m < 12; m++) {
-      var tm = m / 11 * 2 - 1;
-      push(0.23 * tm, -0.44, 0.82, "mouth");
-    }
+  /* ================================================================
+     GEOMETRY — all paths in unit space, origin at the face centre,
+     +y is UP (the ctx is flipped once per frame).
+     Face: top 0.82, chin -0.74, half-width ~0.57.
+     Figure spans y -1.6 (hair tips) .. +1.10 (hair crown).
+     ================================================================ */
+
+  /* ---- back hair: one long flowing mass with a wavy bottom edge ---- */
+  function hairBackPath() {
+    return function () {
+      ctx.moveTo(0, 1.10);
+      ctx.bezierCurveTo(0.60, 1.08, 0.94, 0.78, 0.97, 0.30);
+      ctx.bezierCurveTo(0.99, -0.10, 0.90, -0.50, 0.97, -0.92);
+      ctx.bezierCurveTo(1.02, -1.14, 1.05, -1.32, 0.98, -1.52);
+      ctx.bezierCurveTo(0.86, -1.40, 0.72, -1.38, 0.58, -1.46);
+      ctx.bezierCurveTo(0.40, -1.36, 0.20, -1.34, 0, -1.38);
+      ctx.bezierCurveTo(-0.20, -1.34, -0.40, -1.36, -0.58, -1.46);
+      ctx.bezierCurveTo(-0.72, -1.38, -0.86, -1.40, -0.98, -1.52);
+      ctx.bezierCurveTo(-1.05, -1.32, -1.02, -1.14, -0.97, -0.92);
+      ctx.bezierCurveTo(-0.90, -0.50, -0.99, -0.10, -0.97, 0.30);
+      ctx.bezierCurveTo(-0.94, 0.78, -0.60, 1.08, 0, 1.10);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- neck ---- */
+  function neckPath() {
+    return function () {
+      ctx.moveTo(-0.185, -0.50);
+      ctx.bezierCurveTo(-0.19, -0.72, -0.20, -0.88, -0.235, -1.00);
+      ctx.lineTo(0.235, -1.00);
+      ctx.bezierCurveTo(0.20, -0.88, 0.19, -0.72, 0.185, -0.50);
+      ctx.bezierCurveTo(0.10, -0.60, -0.10, -0.60, -0.185, -0.50);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- shoulders / top with a scoop neckline ---- */
+  function topPath() {
+    return function () {
+      ctx.moveTo(-0.90, -1.60);
+      ctx.bezierCurveTo(-0.94, -1.22, -0.78, -1.04, -0.44, -0.97);
+      ctx.bezierCurveTo(-0.30, -0.94, -0.20, -0.88, -0.155, -0.78);
+      ctx.bezierCurveTo(-0.10, -0.67, 0.10, -0.67, 0.155, -0.78);
+      ctx.bezierCurveTo(0.20, -0.88, 0.30, -0.94, 0.44, -0.97);
+      ctx.bezierCurveTo(0.78, -1.04, 0.94, -1.22, 0.90, -1.60);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- face: rounded forehead, soft cheeks, tapered chin ---- */
+  function facePath() {
+    return function () {
+      ctx.moveTo(0, 0.82);
+      ctx.bezierCurveTo(0.46, 0.82, 0.60, 0.42, 0.57, 0.08);
+      ctx.bezierCurveTo(0.55, -0.24, 0.42, -0.52, 0.18, -0.66);
+      ctx.quadraticCurveTo(0, -0.74, -0.18, -0.66);
+      ctx.bezierCurveTo(-0.42, -0.52, -0.55, -0.24, -0.57, 0.08);
+      ctx.bezierCurveTo(-0.60, 0.42, -0.46, 0.82, 0, 0.82);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- bangs: two sweeps from a part on her right (viewer left) ---- */
+  function bangLeftPath() {
+    return function () {
+      ctx.moveTo(-0.14, 1.00);
+      ctx.bezierCurveTo(-0.52, 0.98, -0.72, 0.72, -0.70, 0.38);
+      ctx.bezierCurveTo(-0.64, 0.56, -0.50, 0.72, -0.32, 0.78);
+      ctx.bezierCurveTo(-0.24, 0.80, -0.17, 0.86, -0.14, 1.00);
+      ctx.closePath();
+    };
+  }
+  function bangRightPath() {
+    return function () {
+      ctx.moveTo(-0.14, 1.00);
+      ctx.bezierCurveTo(0.30, 1.04, 0.62, 0.92, 0.72, 0.55);
+      ctx.bezierCurveTo(0.74, 0.42, 0.72, 0.30, 0.68, 0.20);
+      ctx.bezierCurveTo(0.66, 0.38, 0.58, 0.60, 0.42, 0.72);
+      ctx.bezierCurveTo(0.28, 0.82, 0.05, 0.86, -0.14, 1.00);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- long side strands framing the face (in front of shoulders) ---- */
+  function strandRightPath() {
+    return function () {
+      ctx.moveTo(0.66, 0.30);
+      ctx.bezierCurveTo(0.76, -0.10, 0.72, -0.50, 0.82, -0.88);
+      ctx.bezierCurveTo(0.88, -1.10, 0.86, -1.30, 0.76, -1.48);
+      ctx.bezierCurveTo(0.70, -1.28, 0.70, -1.02, 0.66, -0.76);
+      ctx.bezierCurveTo(0.60, -0.44, 0.58, -0.12, 0.60, 0.26);
+      ctx.closePath();
+    };
+  }
+  function strandLeftPath() {
+    return function () {
+      ctx.moveTo(-0.64, 0.34);
+      ctx.bezierCurveTo(-0.72, -0.05, -0.70, -0.45, -0.78, -0.82);
+      ctx.bezierCurveTo(-0.84, -1.04, -0.82, -1.24, -0.72, -1.42);
+      ctx.bezierCurveTo(-0.66, -1.22, -0.66, -0.96, -0.62, -0.70);
+      ctx.bezierCurveTo(-0.56, -0.38, -0.54, -0.08, -0.56, 0.30);
+      ctx.closePath();
+    };
+  }
+
+  /* ---- eye: almond sclera (open = 1 open .. 0 closed) ---- */
+  function eyePath(cx, cy, open) {
+    var a = 0.185, bu = 0.128, bl = 0.08;
+    var o = Math.max(0.05, open);
+    return function () {
+      ctx.moveTo(cx - a, cy);
+      ctx.bezierCurveTo(cx - a * 0.4, cy + bu * o, cx + a * 0.4, cy + bu * o, cx + a, cy);
+      ctx.bezierCurveTo(cx + a * 0.4, cy - bl * o, cx - a * 0.4, cy - bl * o, cx - a, cy);
+      ctx.closePath();
+    };
   }
 
   /* --------------------------- animation ------------------------- */
@@ -157,7 +266,6 @@
   function lerpParams(dt) {
     var f = 1 - Math.pow(0.0025, dt); // ~smooth over 300ms
     for (var k in T) {
-      // P[k] may be undefined on first frames — snap to target, never NaN
       P[k] = P[k] === undefined ? T[k] : P[k] + (T[k] - P[k]) * f;
     }
   }
@@ -169,12 +277,11 @@
         nextBlink = now + 2400 + Math.random() * 3200;
       }
     } else {
-      blinkPhase += dt / 0.22; // ~220ms blink
+      blinkPhase += dt / 0.24; // ~240ms blink
       if (blinkPhase >= 1) { blinkPhase = -1; blink = 1; }
       else {
-        // closed at mid-blink, open at both ends
         blink = blinkPhase < 0.5 ? 1 - blinkPhase * 2 : (blinkPhase - 0.5) * 2;
-        blink = Math.max(0.06, blink);
+        blink = Math.max(0.05, blink);
       }
     }
   }
@@ -193,12 +300,146 @@
     return Math.min(1, base);
   }
 
-  /* ---------------------------- render --------------------------- */
-  var proj = [];
-  function frame(now) {
-    var dt = Math.min(0.05, (now - last) / 1000 || 0.016);
-    last = now;
+  /* ============================ DRAW ============================== */
 
+  function drawParticles(now, dt, front) {
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p.front !== front) continue;
+      if (!reduced) p.a += p.sp * dt;
+      var x = Math.cos(p.a) * p.rx;
+      var y = Math.sin(p.a) * p.ry;
+      var tw = reduced ? 0.7 : 0.5 + 0.5 * Math.sin(now * 0.0021 + p.tw);
+      ctx.fillStyle = rgba(p.col, (0.16 + 0.5 * tw) * (0.8 + 0.4 * pulse));
+      ctx.beginPath();
+      ctx.arc(x, y, p.sz * (1 + 0.5 * pulse), 0, 6.2832);
+      ctx.fill();
+    }
+  }
+
+  function drawEyes(open, gx, gy) {
+    for (var e = -1; e <= 1; e += 2) {
+      var cx = e * 0.28, cy = 0.13;
+      var ix = cx + gx * 0.5, iy = cy + gy * 0.3; // gaze (subtle, same direction both eyes)
+      var a = 0.185, bu = 0.128, bl = 0.08;
+      var o = Math.max(0.05, open);
+
+      // sclera
+      fillPath(eyePath(cx, cy, open), "rgba(" + SKIN_A + ",0.98)");
+
+      // iris + pupil + glints, clipped to the almond
+      if (o > 0.12) {
+        ctx.save();
+        trace(eyePath(cx, cy, open));
+        ctx.clip();
+        var ig = ctx.createRadialGradient(ix, iy, 0, ix, iy, 0.105);
+        ig.addColorStop(0, "rgba(" + IRIS_A + ",1)");
+        ig.addColorStop(1, "rgba(" + IRIS_B + ",1)");
+        ctx.fillStyle = ig;
+        ctx.beginPath();
+        ctx.arc(ix, iy, 0.102, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "rgba(" + PUPIL + ",1)";
+        ctx.beginPath();
+        ctx.arc(ix, iy, 0.048, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "rgba(" + SKIN_A + ",0.95)";
+        ctx.beginPath();
+        ctx.arc(ix - 0.036, iy + 0.036, 0.025, 0, 6.2832);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ix + 0.022, iy - 0.020, 0.012, 0, 6.2832);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // upper lash line (rides the almond edge) + outer flick
+      strokePath(function () {
+        ctx.moveTo(cx - a, cy);
+        ctx.bezierCurveTo(cx - a * 0.4, cy + bu * o, cx + a * 0.4, cy + bu * o, cx + a, cy);
+        ctx.lineTo(cx + a + 0.055 * e, cy + 0.045 * o + 0.012);
+      }, "rgba(" + INK + "," + (0.75 + 0.25 * o).toFixed(3) + ")", 0.022);
+
+      // lower lid — faint
+      strokePath(function () {
+        ctx.moveTo(cx - a * 0.85, cy);
+        ctx.bezierCurveTo(cx - a * 0.35, cy - bl * o * 0.9, cx + a * 0.35, cy - bl * o * 0.9, cx + a * 0.85, cy);
+      }, "rgba(" + SHADOW + ",0.55)", 0.011, 0.5 + 0.5 * o);
+
+      // closed-lid lash line (fades in as the eye closes)
+      if (o < 0.45) {
+        var cl = (0.45 - o) / 0.45;
+        strokePath(function () {
+          ctx.moveTo(cx - a * 0.82, cy + 0.008);
+          ctx.quadraticCurveTo(cx, cy - 0.045, cx + a * 0.82, cy + 0.008);
+        }, "rgba(" + INK + "," + (0.85 * cl).toFixed(3) + ")", 0.020);
+      }
+    }
+  }
+
+  function drawBrows(brow, tilt) {
+    for (var s = -1; s <= 1; s += 2) {
+      var cx = s * 0.28;
+      var innerX = cx - s * 0.21;   // the end toward the face centre
+      var outerX = cx + s * 0.24;
+      var by = 0.30 + brow * 0.055;
+      var innerY = by - tilt * 0.045;  // sad → inner up; serious → inner down
+      var outerY = by + tilt * 0.022;
+      fillPath(function () {
+        ctx.moveTo(innerX, innerY);
+        ctx.bezierCurveTo(innerX - s * 0.055, innerY + 0.085, outerX - s * 0.065, outerY + 0.058, outerX, outerY);
+        ctx.bezierCurveTo(outerX - s * 0.075, outerY + 0.020, innerX - s * 0.035, innerY + 0.032, innerX, innerY - 0.014);
+        ctx.closePath();
+      }, "rgba(" + BROW + ",0.92)");
+    }
+  }
+
+  function drawMouth(curve, ml) {
+    var w = 0.185;
+    var cy = -0.35 + curve * 0.05;   // smile lifts the corners
+    var lowerTop = cy + 0.020 + ml * 0.11;
+
+    // open-mouth interior (between the lips)
+    if (ml > 0.07) {
+      fillPath(function () {
+        ctx.moveTo(-w * 0.72, cy + 0.008);
+        ctx.quadraticCurveTo(0, cy + 0.024, w * 0.72, cy + 0.008);
+        ctx.quadraticCurveTo(0, lowerTop + 0.012, -w * 0.72, cy + 0.008);
+        ctx.closePath();
+      }, "rgba(" + MOUTH_IN + ",0.92)");
+    }
+
+    // upper lip with cupid's bow
+    fillPath(function () {
+      ctx.moveTo(-w, cy);
+      ctx.bezierCurveTo(-w * 0.72, cy - 0.058, -0.090, cy - 0.068, 0, cy - 0.042);
+      ctx.bezierCurveTo(0.090, cy - 0.068, w * 0.72, cy - 0.058, w, cy);
+      ctx.bezierCurveTo(w * 0.70, cy + 0.022, -w * 0.70, cy + 0.022, -w, cy);
+      ctx.closePath();
+    }, grad(0, cy - 0.07, 0, cy + 0.02, "rgba(" + LIP_A + ",1)", "rgba(" + LIP_B + ",1)"));
+
+    // lower lip (drops when she opens her mouth)
+    fillPath(function () {
+      ctx.moveTo(-w, lowerTop);
+      ctx.bezierCurveTo(-w * 0.60, lowerTop + 0.080, w * 0.60, lowerTop + 0.080, w, lowerTop);
+      ctx.bezierCurveTo(w * 0.70, lowerTop + 0.006, -w * 0.70, lowerTop + 0.006, -w, lowerTop);
+      ctx.closePath();
+    }, grad(0, lowerTop, 0, lowerTop + 0.085, "rgba(" + LIP_B + ",1)", "rgba(" + LIP_A + ",1)"));
+
+    // the lip line
+    strokePath(function () {
+      ctx.moveTo(-w, cy);
+      ctx.bezierCurveTo(-w * 0.6, cy + 0.016, w * 0.6, cy + 0.016, w, cy);
+    }, "rgba(45, 70, 175,0.85)", 0.012);
+
+    // lower-lip highlight
+    ctx.fillStyle = "rgba(255, 255, 255," + (0.28 + 0.2 * ml).toFixed(3) + ")";
+    ctx.beginPath();
+    ctx.ellipse(0, lowerTop + 0.036, 0.055, 0.016, 0, 0, 6.2832);
+    ctx.fill();
+  }
+
+  function drawFrame(now, dt) {
     lerpParams(dt);
     if (!reduced) blinkUpdate(now, dt);
     gazeX += (gazeXT - gazeX) * 0.06;
@@ -207,130 +448,155 @@
 
     var open = P.eyeOpen * (reduced ? 1 : blink);
     var ml = reduced ? P.mouthOpen : mouthLevel(now);
-    var bobY = reduced ? 0 : Math.sin(now * 0.0011) * 0.02;
-    var sway = reduced ? 0 : Math.sin(now * 0.0007) * 0.05;
-    var ry = 0.12 + gazeX * 0.28 + sway;
-    var rx = P.tiltX * 0.5 + gazeY * 0.12 + bobY * 2;
+    var bobY = reduced ? 0 : Math.sin(now * 0.0011) * 0.014;
+    var tilt = reduced ? 0 : P.tiltX * 0.10 + Math.sin(now * 0.0007) * 0.012;
 
     ctx.clearRect(0, 0, W, H);
 
-    // soft halo behind the head
-    var halo = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 1.6);
-    halo.addColorStop(0, "rgba(255, 255, 255," + (0.12 + pulse * 0.12).toFixed(3) + ")");
-    halo.addColorStop(0.7, "rgba(255, 255, 255,0.045)");
-    halo.addColorStop(1, "rgba(255, 255, 255,0)");
-    ctx.fillStyle = halo;
-    ctx.fillRect(0, 0, W, H);
-
-    // rotate (Y then X) + project
-    var cy = Math.cos(ry), sy = Math.sin(ry);
-    var cx = Math.cos(rx), sx = Math.sin(rx);
-    var FOC = 3.1;
-    var n = dots.length;
-    if (proj.length !== n) proj = new Array(n);
-    for (var i = 0; i < n; i++) {
-      var d = dots[i];
-      var x1 = d.x * cy + d.z * sy;
-      var z1 = -d.x * sy + d.z * cy;
-      var y1 = d.y * cx - z1 * sx;
-      var z2 = d.y * sx + z1 * cx;
-      var sc = FOC / (FOC - z2);
-      proj[i] = {
-        x: CX + x1 * R * sc,
-        y: CY - y1 * R * sc, // canvas y is down, model y is up
-        s: sc,
-        z: z2,
-        i: i,
-      };
+    /* ---- figure space: unit coords, +y up ---- */
+    ctx.save();
+    ctx.translate(CX, CY + bobY * R);
+    ctx.scale(R, -R);
+    if (tilt) {
+      ctx.translate(0, -0.25);
+      ctx.rotate(-tilt); // canvas flip: negative = tilt toward -x
+      ctx.translate(0, 0.25);
     }
-    // painter's order: far first
-    var order = [];
-    for (var q = 0; q < n; q++) order.push(q);
-    order.sort(function (a, b) { return proj[a].z - proj[b].z; });
 
-    var base = Math.max(1.1, R / 170);
-    for (var o = 0; o < n; o++) {
-      var p = proj[order[o]];
-      var d2 = dots[order[o]];
-      var near = Math.max(0, Math.min(1, (p.s - 0.86) * 3));
-      var tw = reduced ? 1 : 0.78 + 0.22 * Math.sin(now * 0.002 + d2.tw);
-      var r = (0.9 + 1.5 * near) * base * d2.big * (1 + pulse * 0.5);
-      var alpha = (0.42 + 0.55 * near) * tw * (0.75 + 0.25 * pulse);
+    /* halo */
+    var halo = ctx.createRadialGradient(0, 0.1, 0, 0, 0.1, 2.35);
+    halo.addColorStop(0, "rgba(255, 255, 255," + (0.14 + 0.20 * pulse).toFixed(3) + ")");
+    halo.addColorStop(0.55, "rgba(200, 220, 255," + (0.05 + 0.08 * pulse).toFixed(3) + ")");
+    halo.addColorStop(1, "rgba(200, 220, 255,0)");
+    ctx.fillStyle = halo;
+    ctx.fillRect(-2.6, -2.6, 5.2, 5.2);
 
-      if (d2.kind === "head" || d2.kind === "neck") {
-        ctx.fillStyle = "rgba(" + (near > 0.7 ? C_NEAR : C_BODY) + "," + alpha.toFixed(3) + ")";
-      } else if (d2.kind === "brow") {
-        // emotion: raise + inner tilt, in canvas terms (y is down):
-        // raise = brow up; sad (browTilt<0) = inner up / outer down
-        var inner = Math.abs(d2.x) < 0.31;
-        var raise = P.brow * 0.07 * R;
-        var tilt = (inner ? 1 : -1) * P.browTilt * 0.055 * R;
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (alpha + 0.28).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x, p.y - raise + tilt, r * 1.45, 0, 6.2832);
-        ctx.fill();
-        continue;
-      } else if (d2.kind === "sclera") {
-        // eyes flatten when closing; pale-blue socket reads on white
-        var yy = p.y;
-        var off = (yy - (CY - 0.13 * R)) * (1.05 - open);
-        ctx.fillStyle = "rgba(" + C_SKIN + "," + (0.95 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x, yy + off, r * 1.15, 0, 6.2832);
-        ctx.fill();
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.6 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x, yy + off, r * 0.6, 0, 6.2832);
-        ctx.fill();
-        continue;
-      } else if (d2.kind === "iris") {
-        var yo = p.y + (p.y - (CY - 0.13 * R)) * (1.05 - open);
-        var gx = gazeX * R * 0.045;
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.9 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x + gx, yo, r * 0.95, 0, 6.2832);
-        ctx.fill();
-        continue;
-      } else if (d2.kind === "pupil") {
-        var yp = p.y + (p.y - (CY - 0.13 * R)) * (1.05 - open);
-        ctx.fillStyle = "rgba(" + C_DEEP + "," + (0.95 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x + gazeX * R * 0.045, yp, r * 0.8, 0, 6.2832);
-        ctx.fill();
-        continue;
-      } else if (d2.kind === "nose") {
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.65 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r * 0.95, 0, 6.2832);
-        ctx.fill();
-        continue;
-      } else if (d2.kind === "mouth") {
-        // mouth: curve (smile/frown) + openness (canvas y is down)
-        var t2 = d2.x / 0.23; // -1..1
-        var curveY = -P.mouthCurve * 0.20 * t2 * t2; // + = ends up = smile
-        var lipY = p.y + curveY * R * 0.7;
-        var half = ml * 0.13 * R;
-        ctx.fillStyle = "rgba(" + C_DEEP + "," + (0.92 * tw).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(p.x, lipY - half, r * 1.15, 0, 6.2832);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(p.x, lipY + half, r * 1.15, 0, 6.2832);
-        ctx.fill();
-        if (ml > 0.35) { // inner glow when open
-          ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.4 * ml).toFixed(3) + ")";
-          ctx.beginPath();
-          ctx.arc(p.x, lipY, r * 0.6, 0, 6.2832);
-          ctx.fill();
-        }
-        continue;
-      }
+    drawParticles(now, dt, false);
 
+    /* back hair */
+    fillPath(hairBackPath(), grad(0, 1.1, 0, -1.6, "rgba(" + HAIR_A + ",1)", "rgba(" + HAIR_B + ",1)"));
+    // back-hair strands + highlights
+    strokePath(function () { ctx.moveTo(0.88, 0.55); ctx.bezierCurveTo(0.95, 0.1, 0.86, -0.4, 0.93, -0.9); }, "rgba(" + SHADOW + ",0.55)", 0.02);
+    strokePath(function () { ctx.moveTo(-0.88, 0.5); ctx.bezierCurveTo(-0.94, 0.0, -0.85, -0.5, -0.92, -1.0); }, "rgba(" + SHADOW + ",0.55)", 0.02);
+    strokePath(function () { ctx.moveTo(0.75, 0.6); ctx.bezierCurveTo(0.82, 0.1, 0.74, -0.4, 0.80, -0.95); }, "rgba(255, 255, 255,0.5)", 0.014);
+    strokePath(function () { ctx.moveTo(-0.72, 0.5); ctx.bezierCurveTo(-0.78, 0.0, -0.70, -0.5, -0.76, -1.0); }, "rgba(255, 255, 255,0.45)", 0.014);
+
+    /* neck + shadow under the chin */
+    fillPath(neckPath(), grad(0, -0.5, 0, -1.0, "rgba(" + SKIN_A + ",1)", "rgba(" + SKIN_C + ",1)"));
+    ctx.save();
+    trace(neckPath());
+    ctx.clip();
+    ctx.fillStyle = "rgba(" + SHADOW + ",0.4)";
+    ctx.beginPath();
+    ctx.ellipse(0, -0.66, 0.22, 0.09, 0, 0, 6.2832);
+    ctx.fill();
+    ctx.restore();
+
+    /* shoulders / top */
+    fillPath(topPath(), grad(0, -0.65, 0, -1.6, "rgba(" + TOP_A + ",1)", "rgba(" + TOP_B + ",1)"));
+    // neckline trim
+    strokePath(function () {
+      ctx.moveTo(-0.155, -0.78);
+      ctx.bezierCurveTo(-0.10, -0.67, 0.10, -0.67, 0.155, -0.78);
+    }, "rgba(" + SHADOW + ",0.5)", 0.016);
+
+    /* ears (tucked behind the face edge) */
+    for (var er = -1; er <= 1; er += 2) {
+      ctx.fillStyle = "rgba(" + SKIN_B + ",1)";
       ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, 6.2832);
+      ctx.ellipse(er * 0.585, 0.04, 0.085, 0.125, 0, 0, 6.2832);
+      ctx.fill();
+      (function (ex) {
+        strokePath(function () {
+          ctx.moveTo(ex - 0.03, 0.10);
+          ctx.quadraticCurveTo(ex + 0.02, 0.05, ex - 0.02, 0.0);
+        }, "rgba(" + SHADOW + ",0.6)", 0.012);
+      })(er * 0.585);
+    }
+
+    /* face */
+    fillPath(facePath(), function () {
+      var g = ctx.createRadialGradient(-0.12, 0.30, 0.05, 0, 0, 1.05);
+      g.addColorStop(0, "rgba(" + SKIN_A + ",1)");
+      g.addColorStop(1, "rgba(" + SKIN_B + ",1)");
+      return g;
+    }());
+
+    /* cheeks — a soft feminine blush */
+    for (var ch = -1; ch <= 1; ch += 2) {
+      ctx.fillStyle = "rgba(" + BLUSH + ",0.36)";
+      ctx.beginPath();
+      ctx.ellipse(ch * 0.41, -0.14, 0.125, 0.055, 0, 0, 6.2832);
       ctx.fill();
     }
 
+    /* nose — kept subtle */
+    strokePath(function () {
+      ctx.moveTo(0.015, 0.05);
+      ctx.bezierCurveTo(0.028, -0.01, 0.026, -0.075, 0.048, -0.112);
+    }, "rgba(" + SHADOW + ",0.55)", 0.014);
+    for (var no = -1; no <= 1; no += 2) {
+      ctx.fillStyle = "rgba(" + SHADOW + ",0.4)";
+      ctx.beginPath();
+      ctx.ellipse(no * 0.052, -0.132, 0.018, 0.011, 0, 0, 6.2832);
+      ctx.fill();
+    }
+
+    drawMouth(P.mouthCurve, ml);
+    drawEyes(open, gazeX + P.look * 0.5, gazeY);
+    drawBrows(P.brow, P.browTilt);
+
+    /* front hair — bangs + side strands over the face edge */
+    fillPath(bangLeftPath(), grad(0, 1.0, 0, 0.3, "rgba(" + BANG_A + ",1)", "rgba(" + BANG_B + ",1)"));
+    fillPath(bangRightPath(), grad(0, 1.0, 0, 0.2, "rgba(" + BANG_A + ",1)", "rgba(" + BANG_B + ",1)"));
+    fillPath(strandRightPath(), grad(0, 0.3, 0, -1.5, "rgba(" + STRAND_A + ",1)", "rgba(" + STRAND_B + ",1)"));
+    fillPath(strandLeftPath(), grad(0, 0.35, 0, -1.45, "rgba(" + STRAND_A + ",1)", "rgba(" + STRAND_B + ",1)"));
+    // sheen highlights + strand lines (hair texture)
+    strokePath(function () { ctx.moveTo(-0.50, 0.86); ctx.bezierCurveTo(-0.2, 0.92, 0.10, 0.88, 0.36, 0.70); }, "rgba(255, 255, 255,0.55)", 0.016);
+    strokePath(function () { ctx.moveTo(-0.05, 0.95); ctx.bezierCurveTo(0.25, 0.95, 0.50, 0.82, 0.60, 0.55); }, "rgba(255, 255, 255,0.45)", 0.014);
+    strokePath(function () { ctx.moveTo(-0.45, 0.78); ctx.bezierCurveTo(-0.25, 0.86, -0.05, 0.84, 0.10, 0.78); }, "rgba(255, 255, 255,0.4)", 0.012);
+    strokePath(function () { ctx.moveTo(0.15, 0.86); ctx.bezierCurveTo(0.35, 0.76, 0.50, 0.60, 0.58, 0.38); }, "rgba(255, 255, 255,0.38)", 0.012);
+    strokePath(function () { ctx.moveTo(-0.60, 0.55); ctx.bezierCurveTo(-0.50, 0.68, -0.38, 0.76, -0.24, 0.78); }, "rgba(255, 255, 255,0.32)", 0.011);
+    strokePath(function () { ctx.moveTo(0.72, -0.2); ctx.bezierCurveTo(0.74, -0.6, 0.76, -1.0, 0.78, -1.3); }, "rgba(255, 255, 255,0.4)", 0.012);
+    strokePath(function () { ctx.moveTo(-0.70, -0.15); ctx.bezierCurveTo(-0.70, -0.55, -0.72, -0.95, -0.74, -1.25); }, "rgba(255, 255, 255,0.4)", 0.012);
+    strokePath(function () { ctx.moveTo(0.60, 0.1); ctx.bezierCurveTo(0.62, -0.3, 0.62, -0.7, 0.66, -1.0); }, "rgba(" + SHADOW + ",0.5)", 0.014);
+    strokePath(function () { ctx.moveTo(-0.58, 0.14); ctx.bezierCurveTo(-0.58, -0.28, -0.58, -0.68, -0.62, -1.0); }, "rgba(" + SHADOW + ",0.5)", 0.014);
+
+    /* earrings — small blue-white diamonds at the earlobes */
+    for (var ea = -1; ea <= 1; ea += 2) {
+      var ex = ea * 0.595;
+      ctx.fillStyle = "rgba(" + SKIN_A + ",1)";
+      ctx.beginPath();
+      ctx.arc(ex, -0.10, 0.020, 0, 6.2832);
+      ctx.fill();
+      (function (xx) {
+        fillPath(function () {
+          ctx.moveTo(xx, -0.145);
+          ctx.lineTo(xx + 0.028, -0.185);
+          ctx.lineTo(xx, -0.225);
+          ctx.lineTo(xx - 0.028, -0.185);
+          ctx.closePath();
+        }, "rgba(255, 255, 255,0.95)");
+      })(ex);
+      ctx.strokeStyle = "rgba(90, 125, 235,0.8)";
+      ctx.lineWidth = 0.008;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 255, 255,0.9)";
+      ctx.beginPath();
+      ctx.arc(ex - 0.012, -0.176, 0.008, 0, 6.2832);
+      ctx.fill();
+    }
+
+    drawParticles(now, dt, true);
+
+    ctx.restore();
+  }
+
+  /* ---------------------------- frame ---------------------------- */
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    drawFrame(now, dt);
     if (!reduced) rafId = requestAnimationFrame(frame);
   }
 
@@ -344,10 +610,17 @@
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     CX = W / 2;
     CY = H * 0.46;
-    R = Math.min(W, H) * 0.42;
-    build();
+    var m = Math.min(W, H);
+    R = m * (m < 450 ? 0.35 : 0.33); // fits hair + shoulders inside the stage
+    buildParticles();
+    if (reduced) {
+      last = performance.now();
+      frame(performance.now());
+    }
   }
 
   function start() {
@@ -372,13 +645,7 @@
 
   setTarget("neutral"); // seed params so the very first frame is fully visible
   resize();
-  if (reduced) {
-    // one calm, static frame (and re-render on every API call)
-    last = performance.now();
-    frame(performance.now());
-  } else {
-    start();
-  }
+  if (!reduced) start();
 
   /* ----------------------------- API ----------------------------- */
   window.AdaFace = {

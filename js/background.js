@@ -33,9 +33,9 @@
   }
   function fadeGradient() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "rgba(10, 53, 176, 0.10)");
-    g.addColorStop(0.55, "rgba(4, 32, 124, 0.10)");
-    g.addColorStop(1, "rgba(2, 22, 87, 0.10)");
+    g.addColorStop(0, "rgba(10, 53, 176, 0.16)");
+    g.addColorStop(0.55, "rgba(4, 32, 124, 0.16)");
+    g.addColorStop(1, "rgba(2, 22, 87, 0.16)");
     return g;
   }
 
@@ -90,10 +90,9 @@
     for (let i = 0; i < cols; i++) {
       drops.push({
         x: i * cell,
-        y: rand(-H, H), // start distributed across the screen — rain visible immediately
-        speed: rand(46, 150),
+        y: rand(-H, H), // start distributed — the rain is always on, 1s on 0s off
+        speed: rand(220, 620), // fast, like the movie
         glyph: pick(),
-        gap: rand(0, 420), // some columns start quiet
       });
     }
   }
@@ -119,26 +118,21 @@
     for (const d of drops) {
       d.y += d.speed * dt;
 
-      if (d.y > H + cell) {
-        // recycle with a random reset (classic matrix behaviour)
-        d.y = -rand(20, 260);
-        d.speed = rand(46, 150);
+      if (d.y > H + cell * 8) {
+        // recycle (classic matrix behaviour) — always moving, never idle
+        d.y = -rand(0, 320);
+        d.speed = rand(220, 620);
         d.glyph = pick();
-        d.gap = Math.random() < 0.3 ? rand(60, 420) : 0;
-      }
-      if (d.gap > 0) {
-        d.gap -= d.speed * dt;
-        continue;
       }
 
-      // head: bright; four fading steps behind (longer trail = structure)
+      // bright head + long fading trail, characters mutating like the movie
       // — all dimmed behind Ada's head so she reads clearly in front
       const za = zoneAlpha(d.x, d.y);
-      drawGlyph(d.x, d.y, d.glyph, C_HEAD, 0.9 * za);
-      drawGlyph(d.x, d.y - cell, pick(), C_MID, 0.5 * za);
-      drawGlyph(d.x, d.y - cell * 2, pick(), C_MID, 0.3 * za);
-      drawGlyph(d.x, d.y - cell * 3, pick(), C_DIM, 0.18 * za);
-      drawGlyph(d.x, d.y - cell * 4, pick(), C_DIM, 0.1 * za);
+      drawGlyph(d.x, d.y, d.glyph, C_HEAD, 0.95 * za);
+      for (let s = 1; s <= 8; s++) {
+        const a = (s <= 2 ? 0.5 : 0.3) * Math.pow(0.68, s - 1);
+        drawGlyph(d.x, d.y - s * cell, pick(), s <= 2 ? C_MID : C_DIM, a * za);
+      }
     }
 
     rafId = requestAnimationFrame(frame);
@@ -186,11 +180,11 @@
     updateFaceZone();
     for (let i = 0; i < cols; i++) {
       const d = drops[i];
-      if (d.gap > 100) continue;
       const gy = Math.min(d.y, H * 0.7);
       const za = zoneAlpha(d.x, gy);
       drawGlyph(d.x, gy, d.glyph, C_HEAD, 0.55 * za);
       drawGlyph(d.x, gy + cell, pick(), C_MID, 0.3 * za);
+      drawGlyph(d.x, gy + cell * 2, pick(), C_DIM, 0.18 * za);
     }
   } else {
     start();

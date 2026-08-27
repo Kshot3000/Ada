@@ -7,7 +7,7 @@
      status · provider · key · model · clear
    · live ADA price (CoinGecko, free, no key)
    · API keys live ONLY in this browser (localStorage)
-   · face: Ada's particle head moves, talks & shows emotion (js/face.js)
+   · face: Ada's portrait moves, talks & shows emotion (js/face.js)
    · voice: reads her replies aloud (Web Speech API — no key, free)
    · Matrix-style blue glyph rain behind her (js/background.js)
    ============================================================ */
@@ -191,7 +191,7 @@
   }
 
   /* -------------------------- face & voice ------------------------- */
-  /* Ada's particle head (js/face.js) plus her voice — the Web Speech
+  /* Ada's face (js/face.js) plus her voice — the Web Speech
      API built into every browser: no key, no server, completely free.
      Falls back gracefully when a browser has no TTS engine. */
   var FACE = (window.AdaFace && typeof window.AdaFace.setEmotion === "function")

@@ -1,6 +1,6 @@
 # Ada — AI Agent for the Cardano Blockchain
 
-**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. Deep Cardano blue and white, with Ada's animated **particle head** (she blinks, watches you, talks, and shows emotion), a Matrix-style glyph rain behind her, and a chat console where you ask Ada questions and issue commands.
+**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. Deep Cardano blue and white, with Ada's animated **portrait** — long hair, expressive eyes, full lips (she blinks, watches you, talks, and shows emotion), a Matrix-style glyph rain behind her, and a chat console where you ask Ada questions and issue commands.
 
 - **No build step, no server, no dependencies** — plain HTML/CSS/JS.
 - **Runs 100% in the visitor's browser.** Ada works out of the box with her built-in **offline brain**, or you plug in any **free AI API** (Google AI Studio / Gemini, Groq Cloud, or OpenRouter) from the ⚙ API panel.
@@ -75,7 +75,7 @@ Paste the key, hit **Save settings**, then **Test connection**. You can also swi
 
 ## Ada's face & voice
 
-Ada isn't a logo — she's a **procedural particle head**: a 3D point cloud (cranium, face, brows, nose, mouth, neck) rendered on canvas as white and pale-blue dots over a deep blue background, bittensor-style.
+Ada isn't a logo — she's a **procedural vector portrait**: long periwinkle hair with side-swept fringe and framing strands, almond eyes with irises, glints and lashes, brows, a subtle nose, full blue lips, cheek blush, earrings, neck and shoulders — drawn with canvas bezier paths in white and Cardano blue over the deep-blue Matrix rain, with bittensor-style energy particles orbiting her.
 
 - **Emotions** — Ada's reply text is analyzed and she reacts with one of 9 expressions: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Brows, eyes, mouth, and head tilt animate smoothly between states, and a small chip in the hero shows her current emotion.
 - **Alive** — she blinks every few seconds, her gaze follows your cursor, the head bobs gently, and her mouth moves while she speaks.
@@ -126,7 +126,7 @@ Ada/
 ├── css/styles.css      # deep Cardano blue & white responsive theme
 └── js/
     ├── config.js       # ← EDIT ME: X, donation, provider presets
-    ├── face.js         # Ada's particle head: emotions, blink, gaze, talking
+    ├── face.js         # Ada's portrait: hair, face, emotions, blink, gaze, talking
     ├── background.js   # Matrix-style glyph rain (canvas)
     ├── ada.js          # agent core: chat, providers, streaming, commands, voice
     └── vendor/qrcode.js# vendored QR generator (MIT, Kazuhiko Arase)
