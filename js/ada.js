@@ -7,7 +7,7 @@
      status · provider · key · model · clear
    · live ADA price (CoinGecko, free, no key)
    · API keys live ONLY in this browser (localStorage)
-   · face: Ada's portrait moves, talks & shows emotion (js/face.js)
+   · core: a moving bittensor-style structure reacts to her answers (js/structure.js)
    · voice: reads her replies aloud (Web Speech API — no key, free)
    · Matrix-style blue glyph rain behind her (js/background.js)
    ============================================================ */
@@ -160,8 +160,8 @@
     el.log.appendChild(wrap);
     el.log.scrollTop = el.log.scrollHeight;
     if (role === "ada" && text) {
-      // Ada reacts: her face shows the emotion, her voice reads it
-      faceReact((opts && opts.emotion) || analyzeEmotion(text));
+      // Ada reacts: her core shows the emotion, her voice reads it
+      coreReact((opts && opts.emotion) || analyzeEmotion(text));
       if (!(opts && opts.speak === false)) speak(text);
     }
     return wrap;
@@ -197,12 +197,12 @@
     if (!b && el.input) el.input.focus();
   }
 
-  /* -------------------------- face & voice ------------------------- */
-  /* Ada's face (js/face.js) plus her voice — the Web Speech
+  /* -------------------------- core & voice -------------------------- */
+  /* Ada's moving core (js/structure.js) plus her voice — the Web Speech
      API built into every browser: no key, no server, completely free.
      Falls back gracefully when a browser has no TTS engine. */
-  var FACE = (window.AdaFace && typeof window.AdaFace.setEmotion === "function")
-    ? window.AdaFace : null;
+  var CORE = (window.AdaStructure && typeof window.AdaStructure.setEmotion === "function")
+    ? window.AdaStructure : null;
 
   var SPEECH = (typeof window.speechSynthesis === "object" && window.speechSynthesis)
     ? window.speechSynthesis : null;
@@ -306,14 +306,14 @@
     }
     return "neutral";
   }
-  function faceReact(emo) {
-    if (FACE) FACE.setEmotion(emo);
+  function coreReact(emo) {
+    if (CORE) CORE.setEmotion(emo);
     if (el.emotionChip) el.emotionChip.textContent = "· " + String(emo).toUpperCase() + " ·";
   }
 
   function stopSpeech() {
     if (SPEECH) { try { SPEECH.cancel(); } catch (e) { /* fine */ } }
-    if (FACE) FACE.setTalking(false);
+    if (CORE) CORE.setTalking(false);
   }
 
   function stripForSpeech(md) {
@@ -333,17 +333,19 @@
     var plain = stripForSpeech(text);
     if (!plain) return;
 
-    if (FACE) FACE.setTalking(true); // her mouth moves while she speaks
+    if (CORE) CORE.setTalking(true); // her core pulses while she speaks
 
     if (!SPEECH || typeof window.SpeechSynthesisUtterance === "undefined") {
-      // no TTS engine — still let Ada's mouth move for a beat
-      if (FACE) FACE.talk(Math.min(4200, 900 + plain.length * 28));
+      // no TTS engine — still let Ada's core pulse for a beat
+      if (CORE) CORE.talk(Math.min(4200, 900 + plain.length * 28));
       return;
     }
     try {
       SPEECH.cancel();
       var u = new window.SpeechSynthesisUtterance(plain);
       if (speechVoice) u.voice = speechVoice;
+      // the core pulses with each spoken word (TTS boundary events)
+      u.onboundary = function () { if (CORE) CORE.setMouth(0.5 + Math.random() * 0.5); };
       var natural = !!(speechVoice && /natural|online/i.test(String(speechVoice.name)));
       u.rate = natural ? 1.0 : 1.04;  // neural voices sound best at native pace
       u.pitch = natural ? 1.0 : 1.1; // classic desktop voices need a touch of lift
@@ -352,7 +354,7 @@
       var done = function () {
         if (finished) return;
         finished = true;
-        if (FACE) FACE.setTalking(false); // mouth relaxes back to her emotion
+        if (CORE) CORE.setTalking(false); // core settles back to her emotion
       };
       u.onend = done;
       u.onerror = done;
@@ -362,7 +364,7 @@
         if (!finished && (!SPEECH.speaking || !SPEECH.pending)) done();
       }, Math.min(30000, 4000 + plain.length * 90));
     } catch (e) {
-      if (FACE) FACE.setTalking(false);
+      if (CORE) CORE.setTalking(false);
     }
   }
 
@@ -882,7 +884,7 @@
       }
       if (!acc) throw new Error("The provider returned an empty response.");
       state.messages.push({ role: "assistant", content: acc });
-      faceReact(analyzeEmotion(acc));
+      coreReact(analyzeEmotion(acc));
       speak(acc);
     } catch (err) {
       bubble.remove();
@@ -905,7 +907,7 @@
     var text = el.input.value.trim();
     if (!text) return;
     stopSpeech();
-    if (FACE) { FACE.pulse(); FACE.setEmotion("thinking"); }
+    if (CORE) { CORE.pulse(); CORE.setEmotion("thinking"); }
     el.input.value = "";
     autoGrow();
     addMsg("user", text);

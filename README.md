@@ -1,6 +1,6 @@
 # Ada — AI Agent for the Cardano Blockchain
 
-**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. Deep Cardano blue and white, with Ada's animated **portrait** — long hair, expressive eyes, full lips (she blinks, watches you, talks, and shows emotion), a Matrix-style glyph rain behind her, and a chat console where you ask Ada questions and issue commands.
+**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. Deep Cardano blue and white, with Ada's animated **core** — a moving bittensor-style structure of light (rotating lattice, orbiting energy, glowing nucleus) that reacts to everything she does, a Matrix-style glyph rain behind it, and a chat console where you ask Ada questions and issue commands.
 
 - **No build step, no server, no dependencies** — plain HTML/CSS/JS.
 - **Runs 100% in the visitor's browser.** Ada works out of the box with her built-in **offline brain**, or you plug in any **free AI API** (Google AI Studio / Gemini, Groq Cloud, or OpenRouter) from the ⚙ API panel.
@@ -73,20 +73,20 @@ Paste the key, hit **Save settings**, then **Test connection**. You can also swi
 
 > Free-API source list: [OuterSpacee/free-ai-apis](https://github.com/OuterSpacee/free-ai-apis#llm--text-generation). Model names are editable per provider in the panel — use whatever free model is available on your provider.
 
-## Ada's face & voice
+## Ada's core & voice
 
-Ada isn't a logo — she's a **procedural vector portrait**: long periwinkle hair with side-swept fringe and framing strands, almond eyes with irises, glints and lashes, brows, a subtle nose, full blue lips, cheek blush, earrings, neck and shoulders — drawn with canvas bezier paths in white and Cardano blue over the deep-blue Matrix rain, with bittensor-style energy particles orbiting her.
+Ada isn't a logo — she's a **moving structure of light**, bittensor.com-style: two shells of nodes wired into a rotating lattice, bright energy comets orbiting on tilted paths, and a glowing nucleus — drawn with pure canvas in white and Cardano blue over the deep-blue Matrix rain.
 
-- **Emotions** — Ada's reply text is analyzed and she reacts with one of 9 expressions: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Brows, eyes, mouth, and head tilt animate smoothly between states, and a small chip in the hero shows her current emotion.
-- **Alive** — she blinks every few seconds, her gaze follows your cursor, the head bobs gently, and her mouth moves while she speaks.
+- **Reactive** — Ada's reply text is analyzed and her core reacts with one of 9 states: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Each state changes spin speed, breathing amplitude, size, brightness, and comet velocity, with smooth transitions between them. A small chip in the hero shows her current emotion.
+- **Alive while answering** — when you send a message the core fires a shockwave and shifts to **thinking**: faster spin, nodes drawn inward, data pulses travelling the lattice. While she speaks, the whole structure pulses with her voice (TTS boundary events drive it), and **excited/surprised** answers fire extra shockwave rings.
 - **Voice** — Ada reads her replies aloud with the Web Speech API (free, no API key). Siri/Cortana-class neural voices (Windows “Aria/Jenny Online (Natural)”, macOS “Samantha (Premium)”, Google UK English Female…) are preferred in order. The **🎙 voice picker** in the console lists every installed voice, **🎧** plays a sample of the current pick, and **🔊 / 🔇** toggles speech. Your choice is remembered per browser.
-- **Matrix background** — a rain of pure binary `1`s and `0`s drifts *behind* her head — the rain dims as it passes under her, and a deep-blue stage clearing keeps her face clearly in front. On desktop she sits side-by-side with the chat console, so you can type to her and see her full face at the same time.
+- **Matrix background** — a rain of pure binary `1`s and `0`s drifts *behind* her core — the rain dims as it passes under it, keeping the structure clearly in front. On desktop she sits side-by-side with the chat console, so you can type to her and watch her react at the same time.
 
 Notes:
 
 - Browsers block speech until the visitor first interacts with the page, so the boot greeting is silent and her voice kicks in from your first message onward.
-- If no speech engine is installed, Ada falls back to a simulated talking motion — everything else keeps working.
-- Honors `prefers-reduced-motion`: the face renders one calm static frame and the rain stands still, while all chat and voice logic works unchanged.
+- If no speech engine is installed, Ada's core pulses in place of voice — everything else keeps working.
+- Honors `prefers-reduced-motion`: the core renders one calm static frame and the rain stands still, while all chat and voice logic works unchanged.
 
 ## Ada's offline knowledge base
 
@@ -137,13 +137,13 @@ addr1q8hnl6vl5a6k3rw3n5g3jtte696zcl76kfatzv7gpswa9r0dj7fma6klq55y4ffm7tf0em09udn
 
 ```
 Ada/
-├── index.html          # the site (hero + Ada's face + chat console + support panel)
+├── index.html          # the site (hero + Ada's core + chat console + support panel)
 ├── 404.html            # themed 404 for GitHub Pages
 ├── favicon.svg         # blue hexagon-A
 ├── css/styles.css      # deep Cardano blue & white responsive theme
 └── js/
     ├── config.js       # ← EDIT ME: X, donation, provider presets
-    ├── face.js         # Ada's portrait: hair, face, emotions, blink, gaze, talking
+    ├── structure.js    # Ada's moving core: lattice, comets, emotions, reactions
     ├── background.js   # Matrix-style binary rain (canvas)
     ├── knowledge.js    # offline Cardano knowledge base (no API, no network)
     ├── ada.js          # agent core: chat, providers, streaming, commands, voice
@@ -160,5 +160,5 @@ Ada/
 ## Notes
 
 - Works offline except the `price` command (needs the CoinGecko API) — the offline brain covers everything else.
-- Respects `prefers-reduced-motion` (static face + rain, no animation).
+- Respects `prefers-reduced-motion` (static core + rain, no animation).
 - QR code is generated locally with the vendored `qrcode.js` — zero network calls.

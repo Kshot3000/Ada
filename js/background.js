@@ -51,8 +51,8 @@
   let rafId = 0;
   let last = 0;
 
-  /* Ada stays in front: the rain dims as it passes behind her head */
-  const faceCanvas = document.getElementById("ada-face");
+  /* Ada stays in front: the rain dims as it passes behind her core */
+  const faceCanvas = document.getElementById("ada-core");
   const faceZone = { on: false, cx: 0, cy: 0, rx: 1, ry: 1 };
   function updateFaceZone() {
     if (!faceCanvas) { faceZone.on = false; return; }
@@ -61,7 +61,7 @@
     if (!r || !r.width || !r.height) { faceZone.on = false; return; }
     faceZone.on = true;
     faceZone.cx = r.left + r.width / 2;
-    faceZone.cy = r.top + r.height * 0.46; // Ada's head centre (face.js CY = H*0.46)
+    faceZone.cy = r.top + r.height / 2; // the core sits dead centre (structure.js)
     faceZone.rx = r.width * 0.62;
     faceZone.ry = r.height * 0.70;
   }
