@@ -86,6 +86,36 @@
               <label for="model-input">Model</label>
               <input type="text" id="model-input" autocomplete="off" spellcheck="false" placeholder="model name">
             </div>
+            <div class="voice-heading">Ada's voice — realistic cloud engines <span>(optional · browser TTS is the free default)</span></div>
+            <div class="field" id="voice-engine-wrap">
+              <label for="voice-engine-select">Voice engine</label>
+              <select id="voice-engine-select" aria-label="Voice engine">
+                <option value="browser">🎙 Browser TTS — free, no key</option>
+                <option value="elevenlabs">🎼 ElevenLabs — realistic (10k chars/mo free)</option>
+                <option value="narakeet">🎧 Narakeet — commercial API</option>
+              </select>
+            </div>
+            <div class="field" id="eleven-key-wrap">
+              <label for="eleven-key-input">ElevenLabs API key <a class="link" id="eleven-key-link" href="https://elevenlabs.io" target="_blank" rel="noopener">Get a free key →</a></label>
+              <input type="password" id="eleven-key-input" autocomplete="off" spellcheck="false" placeholder="xi-api-key… stays in this browser only">
+            </div>
+            <div class="field" id="eleven-voice-wrap">
+              <label for="eleven-voice-input">Voice ID (default: Rachel)</label>
+              <input type="text" id="eleven-voice-input" autocomplete="off" spellcheck="false" placeholder="21m00Tcm4TlvDq8ikWAM">
+            </div>
+            <div class="field" id="eleven-model-wrap">
+              <label for="eleven-model-input">ElevenLabs model</label>
+              <input type="text" id="eleven-model-input" autocomplete="off" spellcheck="false" placeholder="eleven_flash_v2_5">
+            </div>
+            <div class="field" id="narakeet-key-wrap">
+              <label for="narakeet-key-input">Narakeet API key <a class="link" href="https://narakeet.com" target="_blank" rel="noopener">narakeet.com →</a></label>
+              <input type="password" id="narakeet-key-input" autocomplete="off" spellcheck="false" placeholder="x-api-key… stays in this browser only">
+            </div>
+            <div class="field" id="narakeet-voice-wrap">
+              <label for="narakeet-voice-input">Voice slug (English female)</label>
+              <input type="text" id="narakeet-voice-input" autocomplete="off" spellcheck="false" placeholder="amy">
+            </div>
+            <div class="voice-note" id="voice-note"></div>
             <div class="settings-actions">
               <button id="save-btn">Save settings</button>
               <button class="ghost" id="test-btn">Test connection</button>

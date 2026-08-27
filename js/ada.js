@@ -8,7 +8,8 @@
    · live ADA price (CoinGecko, free, no key)
    · API keys live ONLY in this browser (localStorage)
    · core: a moving bittensor-style structure reacts to her answers (js/structure.js)
-   · voice: reads her replies aloud (Web Speech API — no key, free)
+   · voice: reads her replies aloud — browser TTS (no key, free) or a
+     realistic cloud voice (ElevenLabs free tier / Narakeet commercial)
    · Matrix-style blue glyph rain behind her (js/background.js)
    ============================================================ */
 (function () {
@@ -25,6 +26,11 @@
     provider: "local",
     voice: true,
     voiceName: "auto", // "auto" = best female voice, or the exact name of a picked voice
+    voiceEngine: "browser", // "browser" | "elevenlabs" | "narakeet"
+    voiceKeys: { elevenlabs: "", narakeet: "" },
+    elevenVoiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel — stable ElevenLabs premade (female)
+    elevenModel: "eleven_flash_v2_5",     // free-tier model (editable)
+    narakeetVoice: "amy",                  // English female voice slug (editable)
     keys: { google: "", groq: "", openrouter: "" },
     models: { google: "", groq: "", openrouter: "" },
     messages: [], // online context: {role:"user"|"assistant", content}
@@ -38,6 +44,14 @@
       if (j.provider && CFG.providers[j.provider]) state.provider = j.provider;
       if (typeof j.voice === "boolean") state.voice = j.voice;
       if (typeof j.voiceName === "string") state.voiceName = j.voiceName;
+      if (j.voiceEngine === "browser" || j.voiceEngine === "elevenlabs" || j.voiceEngine === "narakeet") state.voiceEngine = j.voiceEngine;
+      if (j.voiceKeys) {
+        if (j.voiceKeys.elevenlabs != null) state.voiceKeys.elevenlabs = String(j.voiceKeys.elevenlabs);
+        if (j.voiceKeys.narakeet != null) state.voiceKeys.narakeet = String(j.voiceKeys.narakeet);
+      }
+      if (typeof j.elevenVoiceId === "string" && j.elevenVoiceId) state.elevenVoiceId = j.elevenVoiceId;
+      if (typeof j.elevenModel === "string" && j.elevenModel) state.elevenModel = j.elevenModel;
+      if (typeof j.narakeetVoice === "string" && j.narakeetVoice) state.narakeetVoice = j.narakeetVoice;
       if (j.keys) for (var k in j.keys) if (state.keys[k] != null) state.keys[k] = String(j.keys[k]);
       if (j.models) for (var m in j.models) if (state.models[m] != null) state.models[m] = String(j.models[m]);
     } catch (e) { /* private mode — carry on */ }
@@ -50,6 +64,11 @@
           provider: state.provider,
           voice: state.voice,
           voiceName: state.voiceName,
+          voiceEngine: state.voiceEngine,
+          voiceKeys: state.voiceKeys,
+          elevenVoiceId: state.elevenVoiceId,
+          elevenModel: state.elevenModel,
+          narakeetVoice: state.narakeetVoice,
           keys: state.keys,
           models: state.models,
           messages: state.messages.slice(-20),
@@ -100,6 +119,18 @@
     voiceBtn: $("#voice-btn"),
     voiceSel: $("#voice-select"),
     voiceTest: $("#voice-test"),
+    voiceEngineSel: $("#voice-engine-select"),
+    elevenKeyWrap: $("#eleven-key-wrap"),
+    elevenKeyInput: $("#eleven-key-input"),
+    elevenVoiceWrap: $("#eleven-voice-wrap"),
+    elevenVoiceInput: $("#eleven-voice-input"),
+    elevenModelWrap: $("#eleven-model-wrap"),
+    elevenModelInput: $("#eleven-model-input"),
+    narakeetKeyWrap: $("#narakeet-key-wrap"),
+    narakeetKeyInput: $("#narakeet-key-input"),
+    narakeetVoiceWrap: $("#narakeet-voice-wrap"),
+    narakeetVoiceInput: $("#narakeet-voice-input"),
+    voiceNote: $("#voice-note"),
     qr: $("#qr-box"),
     donAddr: $("#don-addr"),
     donView: $("#don-view"),
@@ -313,6 +344,7 @@
 
   function stopSpeech() {
     if (SPEECH) { try { SPEECH.cancel(); } catch (e) { /* fine */ } }
+    stopCloudAudio();
     if (CORE) CORE.setTalking(false);
   }
 
@@ -328,11 +360,107 @@
       .trim();
   }
 
-  function speak(text) {
-    if (!state.voice) return;
-    var plain = stripForSpeech(text);
-    if (!plain) return;
+  /* --------------------- cloud voice engines -------------------------
+     ElevenLabs: CORS-open, 10,000 free characters/month (elevenlabs.io).
+     Narakeet:  commercial API (their endpoint sends no CORS headers, so
+                some browsers may block the call — we degrade then).
+     Both keys live ONLY in this browser (localStorage), exactly like the
+     LLM provider keys. Any cloud failure falls back to browser TTS so
+     Ada is never silent. */
+  var currentAudio = null;
+  var currentAudioUrl = null;
 
+  function stopCloudAudio() {
+    if (currentAudio) {
+      try { currentAudio.onended = null; currentAudio.onerror = null; } catch (e) { /* fine */ }
+      try { currentAudio.pause(); } catch (e) { /* fine */ }
+      currentAudio = null;
+    }
+    if (currentAudioUrl) {
+      try { URL.revokeObjectURL(currentAudioUrl); } catch (e) { /* fine */ }
+      currentAudioUrl = null;
+    }
+  }
+
+  /* Play a cloud TTS audio blob; her core pulses for the whole clip. */
+  function playCloudAudio(blob) {
+    return new Promise(function (resolve, reject) {
+      stopCloudAudio();
+      var url = null;
+      try { url = URL.createObjectURL(blob); } catch (e) { /* keep null */ }
+      var a = new Audio();
+      if (url) a.src = url;
+      currentAudio = a;
+      currentAudioUrl = url;
+      var settled = false;
+      var finish = function (err) {
+        if (settled) return;
+        settled = true;
+        stopCloudAudio();
+        if (CORE) CORE.setTalking(false);
+        if (err) reject(err); else resolve();
+      };
+      if (CORE) CORE.setTalking(true);
+      a.onended = function () { finish(null); };
+      a.onerror = function () { finish(new Error("audio playback failed")); };
+      var pr = a.play();
+      if (pr && typeof pr.catch === "function") pr.catch(function (e) { finish(e); });
+    });
+  }
+
+  function speakElevenLabs(plain) {
+    var key = String(state.voiceKeys.elevenlabs || "").trim();
+    if (!key) throw new Error("no ElevenLabs key saved");
+    var voiceId = String(state.elevenVoiceId || "").trim() || "21m00Tcm4TlvDq8ikWAM";
+    var model = String(state.elevenModel || "").trim() || "eleven_flash_v2_5";
+    return fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId), {
+      method: "POST",
+      headers: { "xi-api-key": key, "Content-Type": "application/json", accept: "audio/mpeg" },
+      body: JSON.stringify({ text: plain, model_id: model }),
+    }).then(function (res) {
+      if (!res.ok) {
+        var reader = (typeof res.text === "function") ? res.text() : Promise.resolve("");
+        return reader.then(function (t) {
+          var hint = "";
+          try {
+            var j = JSON.parse(t); var d = j.detail;
+            if (d && d.message) hint = String(d.message);
+            else if (d) hint = String(d);
+          } catch (e) { if (t) hint = String(t).slice(0, 120); }
+          throw new Error("ElevenLabs " + res.status + (hint ? " — " + hint : ""));
+        });
+      }
+      return res.blob();
+    }).then(function (blob) {
+      if (!blob || (blob.size != null && blob.size === 0)) throw new Error("ElevenLabs returned no audio");
+      if (CORE) CORE.talk(Math.min(42000, 1600 + plain.length * 55)); // pulse window ≈ speech length
+      return playCloudAudio(blob);
+    });
+  }
+
+  function speakNarakeet(plain) {
+    var key = String(state.voiceKeys.narakeet || "").trim();
+    if (!key) throw new Error("no Narakeet key saved");
+    var voice = String(state.narakeetVoice || "").trim() || "amy";
+    var text = String(plain).slice(0, 950); // short-content endpoint caps near 1 KB
+    return fetch("https://api.narakeet.com/text-to-speech/mp3?voice=" + encodeURIComponent(voice), {
+      method: "POST",
+      headers: { "x-api-key": key, "Content-Type": "text/plain", accept: "application/octet-stream" },
+      body: text,
+    }).then(function (res) {
+      if (!res.ok) {
+        throw new Error("Narakeet " + res.status + " — the API needs a commercial account, and browsers may block it (no CORS headers)");
+      }
+      return res.blob();
+    }).then(function (blob) {
+      if (!blob || (blob.size != null && blob.size === 0)) throw new Error("Narakeet returned no audio");
+      if (CORE) CORE.talk(Math.min(30000, 1400 + text.length * 50));
+      return playCloudAudio(blob);
+    });
+  }
+
+  /* Browser TTS — the free, no-key default (Web Speech API). */
+  function speakBrowser(plain) {
     if (CORE) CORE.setTalking(true); // her core pulses while she speaks
 
     if (!SPEECH || typeof window.SpeechSynthesisUtterance === "undefined") {
@@ -368,11 +496,64 @@
     }
   }
 
+  /* Voice dispatcher: the active cloud engine if configured, browser TTS
+     otherwise. Cloud failures never leave Ada silent — they fall back. */
+  function speak(text) {
+    if (!state.voice) return;
+    var plain = stripForSpeech(text);
+    if (!plain) return;
+
+    if (state.voiceEngine === "elevenlabs" && String(state.voiceKeys.elevenlabs || "").trim()) {
+      speakElevenLabs(plain).catch(function (err) {
+        toast("ElevenLabs voice failed (" + (err && err.message ? err.message : err) + ") — using browser voice");
+        speakBrowser(plain);
+      });
+      return;
+    }
+    if (state.voiceEngine === "narakeet" && String(state.voiceKeys.narakeet || "").trim()) {
+      speakNarakeet(plain).catch(function (err) {
+        toast("Narakeet voice failed (" + (err && err.message ? err.message : err) + ") — using browser voice");
+        speakBrowser(plain);
+      });
+      return;
+    }
+    speakBrowser(plain);
+  }
+
   function refreshVoiceBtn() {
     if (!el.voiceBtn) return;
     el.voiceBtn.textContent = state.voice ? "🔊 Voice on" : "🔇 Voice off";
     el.voiceBtn.setAttribute("aria-pressed", state.voice ? "true" : "false");
     el.voiceBtn.classList.toggle("off", !state.voice);
+  }
+
+  /* ---------------------- voice engine UI (settings) ------------------ */
+  var VOICE_ENGINE_LABELS = {
+    browser: "Browser TTS (free, no key)",
+    elevenlabs: "ElevenLabs (realistic cloud voice)",
+    narakeet: "Narakeet (commercial cloud voice)",
+  };
+  var VOICE_NOTES = {
+    browser: "Browser TTS — free, no key. The 🎙 picker in the console chooses the installed voice and 🎧 previews it. If you pick a cloud engine below but have no key, Ada automatically falls back to this.",
+    elevenlabs: "ElevenLabs — the gold standard for realistic voice. Free tier: 10,000 characters/month. Defaults: voice Rachel (21m00Tcm4TlvDq8ikWAM) · model eleven_flash_v2_5. Free key at elevenlabs.io — it stays in this browser only.",
+    narakeet: "Narakeet — API access requires a commercial account (free accounts are web-app only). Heads-up: their API sends no CORS headers, so some browsers will block the call — if that happens, Ada automatically falls back to browser TTS. Voice is the lowercase voice slug (e.g. amy, grace, beatrice).",
+  };
+
+  function refreshVoiceEngineUI() {
+    var engine = state.voiceEngine || "browser";
+    if (el.voiceEngineSel) el.voiceEngineSel.value = engine;
+    if (el.elevenKeyWrap) el.elevenKeyWrap.style.display = engine === "elevenlabs" ? "" : "none";
+    if (el.elevenVoiceWrap) el.elevenVoiceWrap.style.display = engine === "elevenlabs" ? "" : "none";
+    if (el.elevenModelWrap) el.elevenModelWrap.style.display = engine === "elevenlabs" ? "" : "none";
+    if (el.narakeetKeyWrap) el.narakeetKeyWrap.style.display = engine === "narakeet" ? "" : "none";
+    if (el.narakeetVoiceWrap) el.narakeetVoiceWrap.style.display = engine === "narakeet" ? "" : "none";
+    // keep the fields in sync with the saved state
+    if (el.elevenKeyInput) el.elevenKeyInput.value = state.voiceKeys.elevenlabs || "";
+    if (el.elevenVoiceInput) el.elevenVoiceInput.value = state.elevenVoiceId || "21m00Tcm4TlvDq8ikWAM";
+    if (el.elevenModelInput) el.elevenModelInput.value = state.elevenModel || "eleven_flash_v2_5";
+    if (el.narakeetKeyInput) el.narakeetKeyInput.value = state.voiceKeys.narakeet || "";
+    if (el.narakeetVoiceInput) el.narakeetVoiceInput.value = state.narakeetVoice || "amy";
+    if (el.voiceNote) el.voiceNote.textContent = VOICE_NOTES[engine] || VOICE_NOTES.browser;
   }
 
   /* ------------------------------ price ------------------------------ */
@@ -421,7 +602,8 @@
   var WHO_MD =
     "I'm **Ada**, an AI agent working for the Cardano blockchain — named after Ada Lovelace, the world's first programmer. " +
     "I was built by [" + CFG.author.xHandle + "](" + CFG.author.x + ") and run right here in your browser. " +
-    "You can power me with your own free API key (Google AI Studio, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, Together, DeepInfra, SambaNova, Fireworks, AIML, Novita, or Hyperbolic) — run me on your own machine with Ollama or LM Studio — or use Puter with no key at all — or just use my offline brain, which is what's answering right now unless a provider is selected.";
+    "You can power me with your own free API key (Google AI Studio, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, Together, DeepInfra, SambaNova, Fireworks, AIML, Novita, or Hyperbolic) — run me on your own machine with Ollama or LM Studio — or use Puter with no key at all — or just use my offline brain, which is what's answering right now unless a provider is selected. " +
+    "And if you want a *realistic* voice, open the **API** panel and pick **ElevenLabs** (free 10,000 characters/month) — I'll speak with it automatically.";
 
   var X_MD =
     "Find the builder on X: [" + CFG.author.xHandle + "](" + CFG.author.x + ") — that's where Ada's updates and the other projects get announced.";
@@ -585,7 +767,7 @@
           "`donate` — Cardano donation address + QR\n" +
           "`x` — the builder's X account\n" +
           "`github` — the open-source repo\n" +
-          "`status` — provider, model, key state\n" +
+          "`status` — brain, voice engine, key state\n" +
           "`provider <name>` — switch brains (local, google, groq, openrouter, cerebras, mistral, huggingface, together, deepinfra, sambanova, fireworks, aiml, novita, hyperbolic, puter, ollama, lmstudio)\n" +
           "`key <provider> <value>` — set an API key from chat\n" +
           "`model <name>` — set the model for the current provider\n" +
@@ -639,6 +821,9 @@
           "Brain: **" + meta.label + "**\n" +
           "Model: `" + model + "`\n" +
           "Key: " + keyState + "\n" +
+          "Voice: " + (VOICE_ENGINE_LABELS[state.voiceEngine] || "Browser TTS") +
+            (state.voiceEngine === "elevenlabs" ? (state.voiceKeys.elevenlabs ? " — key ✓, voice `" + state.elevenVoiceId + "`" : " — no key (browser fallback)") : "") +
+            (state.voiceEngine === "narakeet" ? (state.voiceKeys.narakeet ? " — key ✓, voice `" + state.narakeetVoice + "`" : " — no key (browser fallback)") : "") + "\n" +
           "Browser online: " + (navigator.onLine ? "yes" : "no") + "\n" +
           "Chat context: " + state.messages.length + " message(s) kept for the API\n\n" +
           "Switch brains anytime: `provider <name>` — " + Object.keys(CFG.providers).length + " brains in the **API** panel"
@@ -1055,13 +1240,30 @@
       });
     }
 
+    if (el.voiceEngineSel) {
+      el.voiceEngineSel.addEventListener("change", function () {
+        state.voiceEngine = el.voiceEngineSel.value || "browser";
+        saveState();
+        refreshVoiceEngineUI();
+        toast("Voice engine: " + (VOICE_ENGINE_LABELS[state.voiceEngine] || state.voiceEngine));
+      });
+    }
+
     el.saveBtn.addEventListener("click", function () {
       if (CFG.providers[state.provider].needsKey) {
         state.keys[state.provider] = el.keyInput.value.trim();
         state.models[state.provider] = el.modelInput.value.trim() || CFG.providers[state.provider].defaultModel;
       }
+      // voice engine + cloud voice settings (read the fields, then persist)
+      if (el.voiceEngineSel) state.voiceEngine = el.voiceEngineSel.value || "browser";
+      if (el.elevenKeyInput) state.voiceKeys.elevenlabs = el.elevenKeyInput.value.trim();
+      if (el.elevenVoiceInput) state.elevenVoiceId = el.elevenVoiceInput.value.trim() || "21m00Tcm4TlvDq8ikWAM";
+      if (el.elevenModelInput) state.elevenModel = el.elevenModelInput.value.trim() || "eleven_flash_v2_5";
+      if (el.narakeetKeyInput) state.voiceKeys.narakeet = el.narakeetKeyInput.value.trim();
+      if (el.narakeetVoiceInput) state.narakeetVoice = el.narakeetVoiceInput.value.trim() || "amy";
       saveState();
       refreshProviderUI();
+      refreshVoiceEngineUI();
       el.keyInput.value = state.keys[state.provider] || "";
       toast("Settings saved (stored only in this browser)");
     });
@@ -1171,6 +1373,7 @@
     wire();
     refreshProviderUI();
     refreshVoiceBtn();
+    refreshVoiceEngineUI();
     populateVoiceSelect();
     // don't speak on boot — browsers block speech before a user gesture
     addMsg("ada", CFG.agent.greeting, { speak: false });
