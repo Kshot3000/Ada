@@ -24,6 +24,7 @@
   var state = {
     provider: "local",
     voice: true,
+    voiceName: "auto", // "auto" = best female voice, or the exact name of a picked voice
     keys: { google: "", groq: "", openrouter: "" },
     models: { google: "", groq: "", openrouter: "" },
     messages: [], // online context: {role:"user"|"assistant", content}
@@ -36,6 +37,7 @@
       var j = JSON.parse(raw);
       if (j.provider && CFG.providers[j.provider]) state.provider = j.provider;
       if (typeof j.voice === "boolean") state.voice = j.voice;
+      if (typeof j.voiceName === "string") state.voiceName = j.voiceName;
       if (j.keys) for (var k in j.keys) if (state.keys[k] != null) state.keys[k] = String(j.keys[k]);
       if (j.models) for (var m in j.models) if (state.models[m] != null) state.models[m] = String(j.models[m]);
     } catch (e) { /* private mode — carry on */ }
@@ -47,6 +49,7 @@
         JSON.stringify({
           provider: state.provider,
           voice: state.voice,
+          voiceName: state.voiceName,
           keys: state.keys,
           models: state.models,
           messages: state.messages.slice(-20),
@@ -95,6 +98,8 @@
     toast: $("#toast"),
     emotionChip: $("#emotion-chip"),
     voiceBtn: $("#voice-btn"),
+    voiceSel: $("#voice-select"),
+    voiceTest: $("#voice-test"),
     qr: $("#qr-box"),
     donAddr: $("#don-addr"),
     donView: $("#don-view"),
@@ -200,31 +205,86 @@
   var SPEECH = (typeof window.speechSynthesis === "object" && window.speechSynthesis)
     ? window.speechSynthesis : null;
   var speechVoice = null;
-  function refreshSpeechVoice() {
-    if (!SPEECH || !SPEECH.getVoices) return;
-    var vs = SPEECH.getVoices() || [];
-    if (!vs.length) return;
-    // prefer warm female English voices across the OSes
-    var pref = ["Samantha", "Victoria", "Karen", "Moira", "Tessa", "Sara", "Zira",
-      "Aria", "Jenny", "Google US English", "Google UK English Female",
-      "Microsoft Aria", "Microsoft Jenny", "Microsoft Zira", "Microsoft Susan",
-      "Google UK English Male"];
-    var i, j;
-    for (i = 0; i < pref.length; i++) {
+
+  /* Voice priority list — Siri/Cortana-class neural voices first, then the
+     classic desktop female voices. First match wins, so order matters. */
+  var VOICE_PREF = [
+    "Aria Online (Natural)", "Jenny Online (Natural)", "Ana Online (Natural)", "Ava Online (Natural)",
+    "Samantha (Premium)", "Samantha (Enhanced)", "Samantha",
+    "Google UK English Female",
+    "Microsoft Aria", "Microsoft Jenny", "Microsoft Susan",
+    "Victoria", "Karen", "Moira", "Tessa", "Sara", "Zira", "Catherine", "Hazel", "Libby", "Michelle",
+    "Google US English"
+  ];
+
+  function allVoices() {
+    if (!SPEECH || typeof SPEECH.getVoices !== "function") return [];
+    try { return SPEECH.getVoices() || []; } catch (e) { return []; }
+  }
+
+  function bestFemaleVoice() {
+    var vs = allVoices(), i, j;
+    for (i = 0; i < VOICE_PREF.length; i++) {
       for (j = 0; j < vs.length; j++) {
-        if (vs[j].name && vs[j].name.indexOf(pref[i]) !== -1) { speechVoice = vs[j]; return; }
+        if (vs[j].name && String(vs[j].name).indexOf(VOICE_PREF[i]) !== -1) return vs[j];
       }
     }
     for (i = 0; i < vs.length; i++) {
-      if (String(vs[i].lang || "").indexOf("en") === 0) { speechVoice = vs[i]; return; }
+      if (/female|woman/i.test(String(vs[i].name || ""))) return vs[i];
     }
-    speechVoice = vs[0];
+    for (i = 0; i < vs.length; i++) {
+      if (String(vs[i].lang || "").indexOf("en") === 0) return vs[i];
+    }
+    return vs.length ? vs[0] : null;
   }
+
+  /* Resolve Ada's voice: the visitor's exact pick, or the auto best female. */
+  function resolveVoice() {
+    if (state.voiceName && state.voiceName !== "auto") {
+      var vs = allVoices(), i;
+      for (i = 0; i < vs.length; i++) {
+        if (vs[i].name === state.voiceName) { speechVoice = vs[i]; return; }
+      }
+    }
+    speechVoice = bestFemaleVoice();
+  }
+
+  /* Fill the voice picker: Auto + every installed voice, English first. */
+  function populateVoiceSelect() {
+    if (el && el.voiceSel) {
+      var vs = allVoices(), en = [], other = [], i;
+      for (i = 0; i < vs.length; i++) {
+        (String(vs[i].lang || "").indexOf("en") === 0 ? en : other).push(vs[i]);
+      }
+      en.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+      other.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+      el.voiceSel.innerHTML = "";
+      var auto = document.createElement("option");
+      auto.value = "auto";
+      auto.textContent = "\u{1F399} Auto — best female";
+      el.voiceSel.appendChild(auto);
+      var list = en.concat(other);
+      for (i = 0; i < list.length; i++) {
+        var opt = document.createElement("option");
+        opt.value = list[i].name;
+        opt.textContent = list[i].name + " (" + list[i].lang + ")";
+        el.voiceSel.appendChild(opt);
+      }
+      var saved = state.voiceName || "auto", chosen = null, kids = el.voiceSel.children;
+      for (i = 0; i < kids.length; i++) {
+        if (kids[i].value === saved) { chosen = kids[i]; break; }
+      }
+      if (chosen) el.voiceSel.value = chosen.value;
+      else { el.voiceSel.value = "auto"; state.voiceName = "auto"; }
+    }
+    resolveVoice();
+  }
+
   if (SPEECH && SPEECH.getVoices) {
-    refreshSpeechVoice();
+    resolveVoice();
     try {
-      if (SPEECH.addEventListener) SPEECH.addEventListener("voiceschanged", refreshSpeechVoice);
-      else SPEECH.onvoiceschanged = refreshSpeechVoice;
+      if (SPEECH.addEventListener) SPEECH.addEventListener("voiceschanged", populateVoiceSelect);
+      else SPEECH.onvoiceschanged = populateVoiceSelect;
     } catch (e) { /* fine */ }
   }
 
@@ -282,8 +342,9 @@
       SPEECH.cancel();
       var u = new window.SpeechSynthesisUtterance(plain);
       if (speechVoice) u.voice = speechVoice;
-      u.rate = 1.04;
-      u.pitch = 1.08;
+      var natural = !!(speechVoice && /natural|online/i.test(String(speechVoice.name)));
+      u.rate = natural ? 1.0 : 1.04;  // neural voices sound best at native pace
+      u.pitch = natural ? 1.0 : 1.1; // classic desktop voices need a touch of lift
       u.volume = 1;
       var finished = false;
       var done = function () {
@@ -950,6 +1011,24 @@
       toast(state.voice ? "Voice on — I'll read my answers aloud" : "Voice off");
     });
 
+    if (el.voiceSel) {
+      el.voiceSel.addEventListener("change", function () {
+        state.voiceName = el.voiceSel.value || "auto";
+        saveState();
+        resolveVoice();
+        toast(state.voiceName === "auto" ? "Auto voice — best female available" : "Voice: " + state.voiceName);
+      });
+    }
+    if (el.voiceTest) {
+      el.voiceTest.addEventListener("click", function () {
+        var wasMuted = !state.voice;
+        if (wasMuted) state.voice = true; // a preview always gets a voice
+        resolveVoice();
+        speak("Hi! I'm Ada, the AI agent of the Cardano blockchain. This is how I sound.");
+        if (wasMuted) { state.voice = false; saveState(); refreshVoiceBtn(); }
+      });
+    }
+
     el.saveBtn.addEventListener("click", function () {
       if (CFG.providers[state.provider].needsKey) {
         state.keys[state.provider] = el.keyInput.value.trim();
@@ -1066,6 +1145,7 @@
     wire();
     refreshProviderUI();
     refreshVoiceBtn();
+    populateVoiceSelect();
     // don't speak on boot — browsers block speech before a user gesture
     addMsg("ada", CFG.agent.greeting, { speak: false });
     refreshPriceChip();

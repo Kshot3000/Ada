@@ -280,6 +280,7 @@ a:hover { text-decoration: underline; }
 .console-id small { color: var(--muted); font-size: 11.5px; }
 
 .console-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#voice-select { max-width: 200px; min-width: 140px; }
 
 select, input[type="text"], input[type="password"] {
   font-family: var(--font);

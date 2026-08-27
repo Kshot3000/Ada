@@ -79,8 +79,8 @@ Ada isn't a logo — she's a **procedural vector portrait**: long periwinkle hai
 
 - **Emotions** — Ada's reply text is analyzed and she reacts with one of 9 expressions: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Brows, eyes, mouth, and head tilt animate smoothly between states, and a small chip in the hero shows her current emotion.
 - **Alive** — she blinks every few seconds, her gaze follows your cursor, the head bobs gently, and her mouth moves while she speaks.
-- **Voice** — Ada reads her replies aloud with the Web Speech API (free, no API key). A female English voice is preferred when available. The **🔊 / 🔇** button in the console toggles speech, and the choice is remembered per browser.
-- **Matrix background** — a glyph rain (digits plus `₳ λ ∆`) drifts *behind* her head — the rain dims as it passes under her, and a deep-blue stage clearing keeps her face clearly in front. On desktop she sits side-by-side with the chat console, so you can type to her and see her full face at the same time.
+- **Voice** — Ada reads her replies aloud with the Web Speech API (free, no API key). Siri/Cortana-class neural voices (Windows “Aria/Jenny Online (Natural)”, macOS “Samantha (Premium)”, Google UK English Female…) are preferred in order. The **🎙 voice picker** in the console lists every installed voice, **🎧** plays a sample of the current pick, and **🔊 / 🔇** toggles speech. Your choice is remembered per browser.
+- **Matrix background** — a rain of pure binary `1`s and `0`s drifts *behind* her head — the rain dims as it passes under her, and a deep-blue stage clearing keeps her face clearly in front. On desktop she sits side-by-side with the chat console, so you can type to her and see her full face at the same time.
 
 Notes:
 
@@ -127,7 +127,7 @@ Ada/
 └── js/
     ├── config.js       # ← EDIT ME: X, donation, provider presets
     ├── face.js         # Ada's portrait: hair, face, emotions, blink, gaze, talking
-    ├── background.js   # Matrix-style glyph rain (canvas)
+    ├── background.js   # Matrix-style binary rain (canvas)
     ├── ada.js          # agent core: chat, providers, streaming, commands, voice
     └── vendor/qrcode.js# vendored QR generator (MIT, Kazuhiko Arase)
 ```

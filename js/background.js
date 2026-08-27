@@ -39,8 +39,8 @@
     return g;
   }
 
-  /* glyph alphabet: binary + Cardano flavour */
-  const GLYPHS = "010101₳₳λλ∆∆01+*#01₳λ∆0101";
+  /* glyph alphabet: pure binary — 1s and 0s, straight from the movie */
+  const GLYPHS = "01";
 
   let W = 0,
     H = 0,
