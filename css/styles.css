@@ -145,18 +145,16 @@ a:hover { text-decoration: underline; }
   position: absolute;
   left: 50%;
   top: 46%;
-  width: 150%;
+  width: 85%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  /* deep-blue stage clearing: the matrix rain is hidden behind Ada,
-     a pale rim separates her from the rain around the edge */
+  /* subtle halo behind the head — small enough to stay inside the stage
+     (it must never paint over the heading text below) */
   background: radial-gradient(
     circle,
-    #031556 0%,
-    #031556 55%,
-    rgba(3, 21, 86, 0.88) 70%,
-    rgba(255, 255, 255, 0.16) 82%,
-    rgba(255, 255, 255, 0) 94%
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.05) 45%,
+    rgba(255, 255, 255, 0) 70%
   );
   pointer-events: none;
 }
@@ -667,7 +665,7 @@ a.ghost:hover {
   .hero-stage {
     width: 100%;
     max-width: 560px;
-    height: min(52vh, 560px);
+    height: min(58vh, 640px);
     margin: 10px auto 4px;
   }
   .kicker { margin-bottom: 10px; }

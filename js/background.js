@@ -84,13 +84,13 @@
 
   /* ------------------------------ build --------------------------- */
   function build() {
-    cell = W < 640 ? 12 : 14;
+    cell = W < 640 ? 10 : 12;
     cols = Math.max(1, Math.ceil(W / cell) + 1);
     drops = [];
     for (let i = 0; i < cols; i++) {
       drops.push({
         x: i * cell,
-        y: -rand(0, H),
+        y: rand(-H, H), // start distributed across the screen — rain visible immediately
         speed: rand(46, 150),
         glyph: pick(),
         gap: rand(0, 420), // some columns start quiet
@@ -131,12 +131,14 @@
         continue;
       }
 
-      // head: bright; one step behind: mid; two steps: dim
+      // head: bright; four fading steps behind (longer trail = structure)
       // — all dimmed behind Ada's head so she reads clearly in front
       const za = zoneAlpha(d.x, d.y);
       drawGlyph(d.x, d.y, d.glyph, C_HEAD, 0.9 * za);
-      drawGlyph(d.x, d.y - cell, pick(), C_MID, 0.45 * za);
-      drawGlyph(d.x, d.y - cell * 2, pick(), C_DIM, 0.22 * za);
+      drawGlyph(d.x, d.y - cell, pick(), C_MID, 0.5 * za);
+      drawGlyph(d.x, d.y - cell * 2, pick(), C_MID, 0.3 * za);
+      drawGlyph(d.x, d.y - cell * 3, pick(), C_DIM, 0.18 * za);
+      drawGlyph(d.x, d.y - cell * 4, pick(), C_DIM, 0.1 * za);
     }
 
     rafId = requestAnimationFrame(frame);

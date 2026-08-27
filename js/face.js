@@ -156,7 +156,10 @@
   }
   function lerpParams(dt) {
     var f = 1 - Math.pow(0.0025, dt); // ~smooth over 300ms
-    for (var k in T) P[k] += (T[k] - P[k]) * f;
+    for (var k in T) {
+      // P[k] may be undefined on first frames — snap to target, never NaN
+      P[k] = P[k] === undefined ? T[k] : P[k] + (T[k] - P[k]) * f;
+    }
   }
 
   function blinkUpdate(now, dt) {
@@ -367,6 +370,7 @@
     else start();
   });
 
+  setTarget("neutral"); // seed params so the very first frame is fully visible
   resize();
   if (reduced) {
     // one calm, static frame (and re-render on every API call)
