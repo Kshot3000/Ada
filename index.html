@@ -31,18 +31,25 @@
     </header>
 
     <main id="top">
-      <!-- ============ HERO ============ -->
+      <!-- ============ HERO — ADA (the agent UI) ============ -->
       <section class="hero">
         <span class="kicker">Cardano Blockchain · Proof of Stake · Proof of Agent</span>
+        <div class="hero-stage">
+          <div class="stage-glow" aria-hidden="true"></div>
+          <canvas id="ada-face" role="img"
+            aria-label="Ada's face — a blue particle head that blinks, talks, and shows emotion"></canvas>
+        </div>
         <h1>Ada, the <span class="blue">Cardano agent</span></h1>
         <p class="lede">
           An AI agent working for the Cardano blockchain. Ask her about EUTXO, staking,
-          Midnight, or anything else — she answers in your browser, powered by free AI
-          APIs or her built-in offline brain.
+          Midnight, or anything else — she answers in your browser, speaks her replies
+          out loud, and shows you what she's feeling. Powered by free AI APIs or her
+          built-in offline brain.
         </p>
         <div class="hero-chips">
           <span class="chip" id="status-chip"><span class="dot"></span>BOOTING…</span>
           <span class="chip" id="price-chip">ADA —</span>
+          <span class="chip" id="emotion-chip" title="Ada's current emotion">· NEUTRAL ·</span>
         </div>
       </section>
 
@@ -58,6 +65,7 @@
           </div>
           <div class="console-actions">
             <select id="provider-select" aria-label="AI provider"></select>
+            <button class="ghost" id="voice-btn" aria-pressed="true">🔊 Voice on</button>
             <button class="ghost" id="settings-toggle" aria-expanded="false" aria-controls="settings-panel">⚙ API</button>
             <button class="ghost" id="clear-btn">Clear</button>
           </div>
@@ -140,6 +148,7 @@
   <script src="js/config.js"></script>
   <script src="js/vendor/qrcode.js"></script>
   <script src="js/background.js"></script>
+  <script src="js/face.js"></script>
   <script src="js/ada.js"></script>
 </body>
 </html>

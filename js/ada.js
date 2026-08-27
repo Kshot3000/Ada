@@ -7,6 +7,9 @@
      status · provider · key · model · clear
    · live ADA price (CoinGecko, free, no key)
    · API keys live ONLY in this browser (localStorage)
+   · face: Ada's particle head moves, talks & shows emotion (js/face.js)
+   · voice: reads her replies aloud (Web Speech API — no key, free)
+   · Matrix-style blue glyph rain behind her (js/background.js)
    ============================================================ */
 (function () {
   "use strict";
@@ -20,6 +23,7 @@
   var LS_KEY = "ada.state.v1";
   var state = {
     provider: "local",
+    voice: true,
     keys: { google: "", groq: "", openrouter: "" },
     models: { google: "", groq: "", openrouter: "" },
     messages: [], // online context: {role:"user"|"assistant", content}
@@ -31,6 +35,7 @@
       if (!raw) return;
       var j = JSON.parse(raw);
       if (j.provider && CFG.providers[j.provider]) state.provider = j.provider;
+      if (typeof j.voice === "boolean") state.voice = j.voice;
       if (j.keys) for (var k in j.keys) if (state.keys[k] != null) state.keys[k] = String(j.keys[k]);
       if (j.models) for (var m in j.models) if (state.models[m] != null) state.models[m] = String(j.models[m]);
     } catch (e) { /* private mode — carry on */ }
@@ -41,6 +46,7 @@
         LS_KEY,
         JSON.stringify({
           provider: state.provider,
+          voice: state.voice,
           keys: state.keys,
           models: state.models,
           messages: state.messages.slice(-20),
@@ -87,6 +93,8 @@
     saveBtn: $("#save-btn"),
     testBtn: $("#test-btn"),
     toast: $("#toast"),
+    emotionChip: $("#emotion-chip"),
+    voiceBtn: $("#voice-btn"),
     qr: $("#qr-box"),
     donAddr: $("#don-addr"),
     donView: $("#don-view"),
@@ -131,7 +139,7 @@
   }
 
   /* --------------------------- message log --------------------------- */
-  function addMsg(role, text) {
+  function addMsg(role, text, opts) {
     var wrap = document.createElement("div");
     wrap.className = "msg " + role;
     if (role === "user") {
@@ -144,6 +152,11 @@
     }
     el.log.appendChild(wrap);
     el.log.scrollTop = el.log.scrollHeight;
+    if (role === "ada" && text) {
+      // Ada reacts: her face shows the emotion, her voice reads it
+      faceReact((opts && opts.emotion) || analyzeEmotion(text));
+      if (!(opts && opts.speak === false)) speak(text);
+    }
     return wrap;
   }
   function addThinking() {
@@ -155,6 +168,7 @@
     return wrap;
   }
   function clearChat() {
+    stopSpeech();
     el.log.innerHTML = "";
     state.messages = [];
     saveState();
@@ -174,6 +188,126 @@
     el.send.classList.toggle("stop", b);
     el.send.disabled = false;
     if (!b && el.input) el.input.focus();
+  }
+
+  /* -------------------------- face & voice ------------------------- */
+  /* Ada's particle head (js/face.js) plus her voice — the Web Speech
+     API built into every browser: no key, no server, completely free.
+     Falls back gracefully when a browser has no TTS engine. */
+  var FACE = (window.AdaFace && typeof window.AdaFace.setEmotion === "function")
+    ? window.AdaFace : null;
+
+  var SPEECH = (typeof window.speechSynthesis === "object" && window.speechSynthesis)
+    ? window.speechSynthesis : null;
+  var speechVoice = null;
+  function refreshSpeechVoice() {
+    if (!SPEECH || !SPEECH.getVoices) return;
+    var vs = SPEECH.getVoices() || [];
+    if (!vs.length) return;
+    // prefer warm female English voices across the OSes
+    var pref = ["Samantha", "Victoria", "Karen", "Moira", "Tessa", "Sara", "Zira",
+      "Aria", "Jenny", "Google US English", "Google UK English Female",
+      "Microsoft Aria", "Microsoft Jenny", "Microsoft Zira", "Microsoft Susan",
+      "Google UK English Male"];
+    var i, j;
+    for (i = 0; i < pref.length; i++) {
+      for (j = 0; j < vs.length; j++) {
+        if (vs[j].name && vs[j].name.indexOf(pref[i]) !== -1) { speechVoice = vs[j]; return; }
+      }
+    }
+    for (i = 0; i < vs.length; i++) {
+      if (String(vs[i].lang || "").indexOf("en") === 0) { speechVoice = vs[i]; return; }
+    }
+    speechVoice = vs[0];
+  }
+  if (SPEECH && SPEECH.getVoices) {
+    refreshSpeechVoice();
+    try {
+      if (SPEECH.addEventListener) SPEECH.addEventListener("voiceschanged", refreshSpeechVoice);
+      else SPEECH.onvoiceschanged = refreshSpeechVoice;
+    } catch (e) { /* fine */ }
+  }
+
+  /* emotion engine — reads Ada's reply and picks her expression */
+  var EMOTION_RULES = [
+    [/(went wrong|failed|couldn'?t|timed out|no api key)/i, "sad"],
+    [/(connection ok)/i, "excited"],
+    [/(hello|hi |hey |i'?m \*\*ada\*\*|welcome|saved|ready|swapped|donat|support|copied|✓)/i, "happy"],
+    [/(live price|coingecko)/i, "surprised"],
+    [/(beyond my|two options|offline brain|ask me anything)/i, "thinking"],
+    [/(don'?t know|unknown command|not sure|hmm)/i, "confused"],
+  ];
+  function analyzeEmotion(text) {
+    var t = String(text || "");
+    for (var i = 0; i < EMOTION_RULES.length; i++) {
+      if (EMOTION_RULES[i][0].test(t)) return EMOTION_RULES[i][1];
+    }
+    return "neutral";
+  }
+  function faceReact(emo) {
+    if (FACE) FACE.setEmotion(emo);
+    if (el.emotionChip) el.emotionChip.textContent = "· " + String(emo).toUpperCase() + " ·";
+  }
+
+  function stopSpeech() {
+    if (SPEECH) { try { SPEECH.cancel(); } catch (e) { /* fine */ } }
+    if (FACE) FACE.setTalking(false);
+  }
+
+  function stripForSpeech(md) {
+    return String(md)
+      .replace(/```[\s\S]*?```/g, " code block. ")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, " link ")
+      .replace(/[#*_>~|]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function speak(text) {
+    if (!state.voice) return;
+    var plain = stripForSpeech(text);
+    if (!plain) return;
+
+    if (FACE) FACE.setTalking(true); // her mouth moves while she speaks
+
+    if (!SPEECH || typeof window.SpeechSynthesisUtterance === "undefined") {
+      // no TTS engine — still let Ada's mouth move for a beat
+      if (FACE) FACE.talk(Math.min(4200, 900 + plain.length * 28));
+      return;
+    }
+    try {
+      SPEECH.cancel();
+      var u = new window.SpeechSynthesisUtterance(plain);
+      if (speechVoice) u.voice = speechVoice;
+      u.rate = 1.04;
+      u.pitch = 1.08;
+      u.volume = 1;
+      var finished = false;
+      var done = function () {
+        if (finished) return;
+        finished = true;
+        if (FACE) FACE.setTalking(false); // mouth relaxes back to her emotion
+      };
+      u.onend = done;
+      u.onerror = done;
+      SPEECH.speak(u);
+      // safety net: some engines never fire onend
+      setTimeout(function () {
+        if (!finished && (!SPEECH.speaking || !SPEECH.pending)) done();
+      }, Math.min(30000, 4000 + plain.length * 90));
+    } catch (e) {
+      if (FACE) FACE.setTalking(false);
+    }
+  }
+
+  function refreshVoiceBtn() {
+    if (!el.voiceBtn) return;
+    el.voiceBtn.textContent = state.voice ? "🔊 Voice on" : "🔇 Voice off";
+    el.voiceBtn.setAttribute("aria-pressed", state.voice ? "true" : "false");
+    el.voiceBtn.classList.toggle("off", !state.voice);
   }
 
   /* ------------------------------ price ------------------------------ */
@@ -663,6 +797,8 @@
       }
       if (!acc) throw new Error("The provider returned an empty response.");
       state.messages.push({ role: "assistant", content: acc });
+      faceReact(analyzeEmotion(acc));
+      speak(acc);
     } catch (err) {
       bubble.remove();
       state.messages.pop(); // drop the user turn we added
@@ -683,6 +819,8 @@
     }
     var text = el.input.value.trim();
     if (!text) return;
+    stopSpeech();
+    if (FACE) { FACE.pulse(); FACE.setEmotion("thinking"); }
     el.input.value = "";
     autoGrow();
     addMsg("user", text);
@@ -732,7 +870,7 @@
   /* ------------------------------ wiring ----------------------------- */
   function autoGrow() {
     el.input.style.height = "auto";
-    el.input.style.height = Math.min(140, el.input.scrollHeight) + "px";
+    el.input.style.height = Math.min(96, el.input.scrollHeight) + "px";
   }
   function makeQR(container, text) {
     if (typeof window.qrcode !== "function") { container.innerHTML = ""; return; }
@@ -787,6 +925,14 @@
     el.settingsToggle.addEventListener("click", function () {
       var open = el.settings.classList.toggle("open");
       el.settingsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    el.voiceBtn.addEventListener("click", function () {
+      state.voice = !state.voice;
+      saveState();
+      refreshVoiceBtn();
+      if (!state.voice) stopSpeech();
+      toast(state.voice ? "Voice on — I'll read my answers aloud" : "Voice off");
     });
 
     el.saveBtn.addEventListener("click", function () {
@@ -904,7 +1050,9 @@
 
     wire();
     refreshProviderUI();
-    addMsg("ada", CFG.agent.greeting);
+    refreshVoiceBtn();
+    // don't speak on boot — browsers block speech before a user gesture
+    addMsg("ada", CFG.agent.greeting, { speak: false });
     refreshPriceChip();
   }
 
