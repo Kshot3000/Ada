@@ -870,7 +870,7 @@
   /* ------------------------------ wiring ----------------------------- */
   function autoGrow() {
     el.input.style.height = "auto";
-    el.input.style.height = Math.min(96, el.input.scrollHeight) + "px";
+    el.input.style.height = Math.min(72, el.input.scrollHeight) + "px";
   }
   function makeQR(container, text) {
     if (typeof window.qrcode !== "function") { container.innerHTML = ""; return; }

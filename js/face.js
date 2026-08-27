@@ -112,16 +112,16 @@
   function build() {
     dots = [];
     // cranium + face (one deformed sphere, jaw taper applied)
-    fibSphere(300, 0, 0.10, -0.06, 0.78, 1.04, 0.90,
+    fibSphere(560, 0, 0.10, -0.06, 0.78, 1.04, 0.90,
       function (lx, ly) { return true; }, "head");
     // back-of-head density
-    fibSphere(90, 0, 0.14, -0.16, 0.70, 0.97, 0.85,
+    fibSphere(160, 0, 0.14, -0.16, 0.70, 0.97, 0.85,
       function (lx, ly, lz) { return lz < -0.1; }, "head");
     // neck
-    for (var i = 0; i < 70; i++) {
+    for (var i = 0; i < 120; i++) {
       var a = Math.random() * 6.2832;
-      var yy = -0.98 - Math.random() * 0.5;
-      var rr = 0.32 + Math.random() * 0.07;
+      var yy = -0.92 - Math.random() * 0.32;
+      var rr = 0.30 + Math.random() * 0.07;
       push(Math.cos(a) * rr, yy, -0.10 + Math.sin(a) * rr * 0.8, "neck");
     }
     // eyes (sclera / iris / pupil)
@@ -244,14 +244,14 @@
     for (var q = 0; q < n; q++) order.push(q);
     order.sort(function (a, b) { return proj[a].z - proj[b].z; });
 
-    var base = Math.max(0.8, R / 240);
+    var base = Math.max(1.1, R / 170);
     for (var o = 0; o < n; o++) {
       var p = proj[order[o]];
       var d2 = dots[order[o]];
       var near = Math.max(0, Math.min(1, (p.s - 0.86) * 3));
       var tw = reduced ? 1 : 0.78 + 0.22 * Math.sin(now * 0.002 + d2.tw);
       var r = (0.9 + 1.5 * near) * base * d2.big * (1 + pulse * 0.5);
-      var alpha = (0.30 + 0.55 * near) * tw * (0.75 + 0.25 * pulse);
+      var alpha = (0.42 + 0.55 * near) * tw * (0.75 + 0.25 * pulse);
 
       if (d2.kind === "head" || d2.kind === "neck") {
         ctx.fillStyle = "rgba(" + (near > 0.7 ? C_NEAR : C_BODY) + "," + alpha.toFixed(3) + ")";
@@ -259,11 +259,11 @@
         // emotion: raise + inner tilt, in canvas terms (y is down):
         // raise = brow up; sad (browTilt<0) = inner up / outer down
         var inner = Math.abs(d2.x) < 0.31;
-        var raise = P.brow * 0.07;
-        var tilt = (inner ? 1 : -1) * P.browTilt * 0.055;
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (alpha + 0.18).toFixed(3) + ")";
+        var raise = P.brow * 0.07 * R;
+        var tilt = (inner ? 1 : -1) * P.browTilt * 0.055 * R;
+        ctx.fillStyle = "rgba(" + C_FEAT + "," + (alpha + 0.28).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x, p.y - raise + tilt, r * 1.3, 0, 6.2832);
+        ctx.arc(p.x, p.y - raise + tilt, r * 1.45, 0, 6.2832);
         ctx.fill();
         continue;
       } else if (d2.kind === "sclera") {
@@ -272,11 +272,11 @@
         var off = (yy - (CY - 0.13 * R)) * (1.05 - open);
         ctx.fillStyle = "rgba(" + C_SKIN + "," + (0.95 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x, yy + off, r * 1.05, 0, 6.2832);
+        ctx.arc(p.x, yy + off, r * 1.15, 0, 6.2832);
         ctx.fill();
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.45 * tw).toFixed(3) + ")";
+        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.6 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x, yy + off, r * 0.55, 0, 6.2832);
+        ctx.arc(p.x, yy + off, r * 0.6, 0, 6.2832);
         ctx.fill();
         continue;
       } else if (d2.kind === "iris") {
@@ -284,20 +284,20 @@
         var gx = gazeX * R * 0.045;
         ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.9 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x + gx, yo, r * 0.8, 0, 6.2832);
+        ctx.arc(p.x + gx, yo, r * 0.95, 0, 6.2832);
         ctx.fill();
         continue;
       } else if (d2.kind === "pupil") {
         var yp = p.y + (p.y - (CY - 0.13 * R)) * (1.05 - open);
         ctx.fillStyle = "rgba(" + C_DEEP + "," + (0.95 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x + gazeX * R * 0.045, yp, r * 0.65, 0, 6.2832);
+        ctx.arc(p.x + gazeX * R * 0.045, yp, r * 0.8, 0, 6.2832);
         ctx.fill();
         continue;
       } else if (d2.kind === "nose") {
-        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.55 * tw).toFixed(3) + ")";
+        ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.65 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x, p.y, r * 0.8, 0, 6.2832);
+        ctx.arc(p.x, p.y, r * 0.95, 0, 6.2832);
         ctx.fill();
         continue;
       } else if (d2.kind === "mouth") {
@@ -305,13 +305,13 @@
         var t2 = d2.x / 0.23; // -1..1
         var curveY = -P.mouthCurve * 0.20 * t2 * t2; // + = ends up = smile
         var lipY = p.y + curveY * R * 0.7;
-        var half = ml * 0.12 * R;
-        ctx.fillStyle = "rgba(" + C_DEEP + "," + (0.85 * tw).toFixed(3) + ")";
+        var half = ml * 0.13 * R;
+        ctx.fillStyle = "rgba(" + C_DEEP + "," + (0.92 * tw).toFixed(3) + ")";
         ctx.beginPath();
-        ctx.arc(p.x, lipY - half, r * 1.0, 0, 6.2832);
+        ctx.arc(p.x, lipY - half, r * 1.15, 0, 6.2832);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(p.x, lipY + half, r * 1.0, 0, 6.2832);
+        ctx.arc(p.x, lipY + half, r * 1.15, 0, 6.2832);
         ctx.fill();
         if (ml > 0.35) { // inner glow when open
           ctx.fillStyle = "rgba(" + C_FEAT + "," + (0.4 * ml).toFixed(3) + ")";
@@ -342,7 +342,7 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     CX = W / 2;
     CY = H * 0.46;
-    R = Math.min(W, H) * 0.34;
+    R = Math.min(W, H) * 0.42;
     build();
   }
 
