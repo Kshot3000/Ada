@@ -1,9 +1,9 @@
 /* ============================================================
-   ADA — background: the Matrix, in Cardano blue
+   ADA — background: the Matrix, in Cardano blue (inverted)
    A bittensor.com-inspired moving structure: digital glyph
-   rain (digits, ∆, λ and the ADA symbol ₳) falling over
-   white, blue on white. Pure canvas 2D, zero dependencies,
-   fully responsive, pauses when hidden, and honours
+   rain (digits, ∆, λ and the ADA symbol ₳) — white on deep
+   Cardano blue. Pure canvas 2D, zero dependencies, fully
+   responsive, pauses when hidden, and honours
    prefers-reduced-motion with a single static frame.
    ============================================================ */
 (function () {
@@ -18,10 +18,26 @@
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* Cardano-blue palette (rgb triplets for alpha blending) */
-  const C_HEAD = "0, 51, 173";    // #0033AD leading glyph
-  const C_MID = "42, 90, 219";    // #2A5ADB trail
-  const C_DIM = "77, 124, 255";   // #4D7CFF faintest trail
+  /* inverted palette (rgb triplets for alpha blending) */
+  const C_HEAD = "255, 255, 255";    // white leading glyph
+  const C_MID = "213, 226, 255";    // #D5E2FF trail
+  const C_DIM = "122, 152, 255";    // faintest trail
+
+  /* deep-blue page gradient (the canvas IS the page background) */
+  function baseGradient() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0a35b0");
+    g.addColorStop(0.55, "#04207c");
+    g.addColorStop(1, "#021657");
+    return g;
+  }
+  function fadeGradient() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "rgba(10, 53, 176, 0.10)");
+    g.addColorStop(0.55, "rgba(4, 32, 124, 0.10)");
+    g.addColorStop(1, "rgba(2, 22, 87, 0.10)");
+    return g;
+  }
 
   /* glyph alphabet: binary + Cardano flavour */
   const GLYPHS = "010101₳₳λλ∆∆01+*#01₳λ∆0101";
@@ -68,8 +84,8 @@
     const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
     last = now;
 
-    // fade the previous frame toward white → glyph trails
-    ctx.fillStyle = "rgba(255, 255, 255,0.10)";
+    // fade the previous frame toward the blue base → glyph trails
+    ctx.fillStyle = fadeGradient();
     ctx.fillRect(0, 0, W, H);
 
     ctx.font = "600 " + (cell - 3) + "px 'Cascadia Code','JetBrains Mono',Consolas,monospace";
@@ -110,8 +126,8 @@
     canvas.style.height = H + "px";
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     build();
-    // start fully white so the first fade frame has a base
-    ctx.fillStyle = "#ffffff";
+    // start on the blue base so the first fade frame has a base
+    ctx.fillStyle = baseGradient();
     ctx.fillRect(0, 0, W, H);
   }
 
@@ -134,7 +150,7 @@
   resize();
   if (reduced) {
     // one calm, static frame: a few short glyph columns
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = baseGradient();
     ctx.fillRect(0, 0, W, H);
     ctx.font = "600 " + (cell - 3) + "px 'Cascadia Code','JetBrains Mono',Consolas,monospace";
     ctx.textBaseline = "top";

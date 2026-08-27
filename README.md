@@ -1,6 +1,6 @@
 # Ada — AI Agent for the Cardano Blockchain
 
-**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. White and Cardano-blue, with Ada's animated **particle head** (she blinks, watches you, talks, and shows emotion), a Matrix-style glyph rain behind her, and a chat console where you ask Ada questions and issue commands.
+**Ada** is an AI agent working for the Cardano blockchain — a single-page, zero-server website you can run anywhere and post to GitHub. Deep Cardano blue and white, with Ada's animated **particle head** (she blinks, watches you, talks, and shows emotion), a Matrix-style glyph rain behind her, and a chat console where you ask Ada questions and issue commands.
 
 - **No build step, no server, no dependencies** — plain HTML/CSS/JS.
 - **Runs 100% in the visitor's browser.** Ada works out of the box with her built-in **offline brain**, or you plug in any **free AI API** (Google AI Studio / Gemini, Groq Cloud, or OpenRouter) from the ⚙ API panel.
@@ -75,12 +75,12 @@ Paste the key, hit **Save settings**, then **Test connection**. You can also swi
 
 ## Ada's face & voice
 
-Ada isn't a logo — she's a **procedural particle head**: a 3D point cloud (cranium, face, brows, nose, mouth, neck) rendered on canvas as blue dots on white, bittensor-style.
+Ada isn't a logo — she's a **procedural particle head**: a 3D point cloud (cranium, face, brows, nose, mouth, neck) rendered on canvas as white and pale-blue dots over a deep blue background, bittensor-style.
 
 - **Emotions** — Ada's reply text is analyzed and she reacts with one of 9 expressions: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Brows, eyes, mouth, and head tilt animate smoothly between states, and a small chip in the hero shows her current emotion.
 - **Alive** — she blinks every few seconds, her gaze follows your cursor, the head bobs gently, and her mouth moves while she speaks.
 - **Voice** — Ada reads her replies aloud with the Web Speech API (free, no API key). A female English voice is preferred when available. The **🔊 / 🔇** button in the console toggles speech, and the choice is remembered per browser.
-- **Matrix background** — a blue glyph rain (digits plus `₳ λ ∆`) drifts behind her head, themed to the white/blue palette.
+- **Matrix background** — a blue glyph rain (digits plus `₳ λ ∆`) drifts behind her head, themed to the deep-blue/white palette.
 
 Notes:
 
@@ -123,7 +123,7 @@ Ada/
 ├── index.html          # the site (hero + Ada's face + chat console + support panel)
 ├── 404.html            # themed 404 for GitHub Pages
 ├── favicon.svg         # blue hexagon-A
-├── css/styles.css      # white & Cardano-blue responsive theme
+├── css/styles.css      # deep Cardano blue & white responsive theme
 └── js/
     ├── config.js       # ← EDIT ME: X, donation, provider presets
     ├── face.js         # Ada's particle head: emotions, blink, gaze, talking

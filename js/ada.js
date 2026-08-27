@@ -878,14 +878,29 @@
       var qr = window.qrcode(10, "M");
       qr.addData(text);
       qr.make();
-      container.innerHTML = qr.createImgTag(2, 2);
-      var img = container.querySelector("img");
-      if (img) {
-        img.style.width = "100%";
-        img.style.height = "auto";
-        img.style.imageRendering = "pixelated";
-        img.alt = "QR code of the Cardano donation address";
+      // Draw Cardano-blue modules on white (strict blue/white palette)
+      var n = qr.getModuleCount();
+      var s = 6, q = s * 2;
+      var size = n * s + q * 2;
+      var cv = document.createElement("canvas");
+      cv.width = size; cv.height = size;
+      var cx = cv.getContext("2d");
+      cx.fillStyle = "#ffffff";
+      cx.fillRect(0, 0, size, size);
+      cx.fillStyle = "#0033ad";
+      for (var r = 0; r < n; r++) {
+        for (var c = 0; c < n; c++) {
+          if (qr.isDark(r, c)) cx.fillRect(q + c * s, q + r * s, s, s);
+        }
       }
+      container.innerHTML = "";
+      var img = document.createElement("img");
+      img.src = cv.toDataURL("image/png");
+      img.alt = "QR code of the Cardano donation address";
+      img.style.width = "100%";
+      img.style.height = "auto";
+      img.style.imageRendering = "pixelated";
+      container.appendChild(img);
     } catch (e) { container.innerHTML = ""; }
   }
   function copyText(text) {

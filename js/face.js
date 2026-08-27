@@ -28,11 +28,12 @@
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* --------------------------- palette --------------------------- */
-  var C_BODY = "0, 51, 173";    // #0033AD Cardano blue
-  var C_NEAR = "77, 124, 255";  // #4D7CFF near dots
-  var C_FEAT = "42, 90, 219";   // #2A5ADB feature dots
-  var C_DEEP = "11, 31, 107";   // #0B1F6B deep (mouth/iris)
-  var C_SKIN = "228, 237, 255"; // #E4EDFF pale blue (eye sockets)
+  /* inverted: white face on Cardano blue */
+  var C_BODY = "213, 226, 255"; // #D5E2FF pale blue (head bulk)
+  var C_NEAR = "255, 255, 255"; // white (front dots — brightest)
+  var C_FEAT = "255, 255, 255"; // white features (brows/iris/nose)
+  var C_DEEP = "2, 18, 74";     // #02124A deep blue (pupil/mouth)
+  var C_SKIN = "4, 26, 96";     // #041A60 blue eye sockets
 
   /* ------------------------ emotion table ------------------------ */
   /* brow: raise (−..+), browTilt: inner-up (sad) / inner-down (angry)
@@ -212,9 +213,9 @@
 
     // soft halo behind the head
     var halo = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 1.6);
-    halo.addColorStop(0, "rgba(42, 90, 219," + (0.10 + pulse * 0.10).toFixed(3) + ")");
-    halo.addColorStop(0.7, "rgba(42, 90, 219,0.035)");
-    halo.addColorStop(1, "rgba(42, 90, 219,0)");
+    halo.addColorStop(0, "rgba(255, 255, 255," + (0.12 + pulse * 0.12).toFixed(3) + ")");
+    halo.addColorStop(0.7, "rgba(255, 255, 255,0.045)");
+    halo.addColorStop(1, "rgba(255, 255, 255,0)");
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, W, H);
 

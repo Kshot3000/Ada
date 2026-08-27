@@ -1,23 +1,26 @@
 /* ============================================================
    ADA — AI Agent for the Cardano Blockchain
-   White & Cardano-blue theme. Responsive, zero dependencies.
+   Inverted theme: deep Cardano-blue everywhere, white elements.
+   (Blue where white was, white where blue was.)
+   Responsive, zero dependencies.
    ============================================================ */
 
 :root {
-  --bg: #ffffff;
-  --bg-2: #f4f7ff;
-  --blue: #0033ad;      /* Cardano blue */
+  color-scheme: dark;
+  --bg: #05259b;
+  --bg-2: #041c74;
+  --blue: #0033ad;      /* Cardano blue — ink on white surfaces */
   --blue-2: #2a5adb;
   --blue-3: #4d7cff;
-  --navy: #0b1f6b;
-  --ink: #14245f;
-  --muted: #5a6ca8;
-  --line: #d9e2fb;
-  --line-2: #c2d1f8;
-  --chip: #e9efff;
-  --ok: #1f6feb;
-  --shadow: 0 10px 40px rgba(0, 51, 173, 0.12);
-  --shadow-2: 0 4px 18px rgba(0, 51, 173, 0.10);
+  --navy: #ffffff;      /* inverted: primary text is white */
+  --ink: #e9efff;       /* body text, near-white */
+  --muted: #a9bdf2;     /* pale-blue secondary text */
+  --line: rgba(255, 255, 255, 0.20);
+  --line-2: rgba(255, 255, 255, 0.34);
+  --chip: rgba(255, 255, 255, 0.12);
+  --ok: #ffffff;
+  --shadow: 0 10px 40px rgba(1, 8, 40, 0.50);
+  --shadow-2: 0 4px 18px rgba(1, 8, 40, 0.45);
   --radius: 16px;
   --font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: "Cascadia Code", "JetBrains Mono", Consolas, "SF Mono", Menlo, monospace;
@@ -30,16 +33,19 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: var(--font);
-  background: var(--bg);
+  background:
+    radial-gradient(120% 80% at 50% 0%, #1550e6 0%, rgba(21, 80, 230, 0) 62%),
+    linear-gradient(180deg, #0a35b0 0%, #04207c 55%, #021657 100%);
+  background-attachment: fixed;
   color: var(--ink);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
-::selection { background: #d5e2ff; color: var(--navy); }
+::selection { background: #ffffff; color: var(--blue); }
 
-a { color: var(--blue); text-decoration: none; }
+a { color: #ffffff; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* --------------------------- background --------------------------- */
@@ -70,7 +76,7 @@ a:hover { text-decoration: underline; }
   justify-content: space-between;
   gap: 16px;
   padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(2, 18, 78, 0.72);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
@@ -79,7 +85,7 @@ a:hover { text-decoration: underline; }
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--navy);
+  color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -90,8 +96,8 @@ a:hover { text-decoration: underline; }
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--blue), var(--blue-3));
-  color: #fff;
+  background: #ffffff;
+  color: var(--blue);
   font-weight: 800;
   font-size: 17px;
   box-shadow: var(--shadow-2);
@@ -109,7 +115,7 @@ a:hover { text-decoration: underline; }
 .topnav a {
   padding: 7px 12px;
   border-radius: 999px;
-  color: var(--navy);
+  color: #ffffff;
   font-size: 13.5px;
   font-weight: 600;
 }
@@ -117,7 +123,7 @@ a:hover { text-decoration: underline; }
 .topnav a.ext {
   border: 1px solid var(--line-2);
 }
-.topnav a.ext:hover { border-color: var(--blue-2); }
+.topnav a.ext:hover { border-color: #ffffff; }
 
 /* ------------------------------- hero ------------------------------ */
 
@@ -144,9 +150,9 @@ a:hover { text-decoration: underline; }
   transform: translate(-50%, -50%);
   background: radial-gradient(
     circle,
-    rgba(42, 90, 219, 0.14) 0%,
-    rgba(42, 90, 219, 0.05) 45%,
-    rgba(42, 90, 219, 0) 70%
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0) 70%
   );
   pointer-events: none;
 }
@@ -164,7 +170,7 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: #ffffff;
   background: var(--chip);
   border: 1px solid var(--line-2);
   border-radius: 999px;
@@ -177,11 +183,11 @@ a:hover { text-decoration: underline; }
   font-size: clamp(30px, 5.5vw, 52px);
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: var(--navy);
+  color: #ffffff;
   font-weight: 800;
 }
 .hero h1 .blue {
-  background: linear-gradient(120deg, var(--blue) 10%, var(--blue-3) 90%);
+  background: linear-gradient(120deg, #ffffff 10%, #b9ccff 90%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -207,8 +213,8 @@ a:hover { text-decoration: underline; }
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--navy);
-  background: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.10);
   border: 1px solid var(--line-2);
   border-radius: 999px;
   padding: 7px 14px;
@@ -219,17 +225,17 @@ a:hover { text-decoration: underline; }
   height: 8px;
   border-radius: 50%;
   background: var(--ok);
-  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
   animation: pulse 2.2s ease-in-out infinite;
 }
 #emotion-chip {
   letter-spacing: 0.08em;
   font-variant: small-caps;
 }
-.chip.off .dot { background: #93a5d8; animation: none; }
+.chip.off .dot { background: #7d95d8; animation: none; }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15); }
-  50% { box-shadow: 0 0 0 6px rgba(31, 111, 235, 0.05); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.06); }
 }
 
 /* ------------------------------ console ---------------------------- */
@@ -237,7 +243,7 @@ a:hover { text-decoration: underline; }
 .console {
   max-width: 860px;
   margin: 26px auto 0;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(3, 20, 84, 0.62);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
@@ -253,7 +259,7 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #fbfcff, #f4f7ff);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
 }
 
 .console-id { display: flex; align-items: center; gap: 10px; }
@@ -263,12 +269,12 @@ a:hover { text-decoration: underline; }
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--blue), var(--blue-3));
-  color: #fff;
+  background: #ffffff;
+  color: var(--blue);
   font-weight: 800;
   font-size: 18px;
 }
-.console-id strong { color: var(--navy); font-size: 15px; display: block; line-height: 1.2; }
+.console-id strong { color: #ffffff; font-size: 15px; display: block; line-height: 1.2; }
 .console-id small { color: var(--muted); font-size: 11.5px; }
 
 .console-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -276,55 +282,55 @@ a:hover { text-decoration: underline; }
 select, input[type="text"], input[type="password"] {
   font-family: var(--font);
   font-size: 13px;
-  color: var(--navy);
-  background: #fff;
+  color: #ffffff;
+  background: rgba(1, 10, 45, 0.45);
   border: 1px solid var(--line-2);
   border-radius: 10px;
   padding: 8px 10px;
   outline: none;
 }
 select:focus, input:focus, textarea:focus {
-  border-color: var(--blue-2);
-  box-shadow: 0 0 0 3px rgba(42, 90, 219, 0.12);
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
 }
 
 button {
   font-family: var(--font);
   font-size: 13.5px;
   font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, var(--blue), var(--blue-2));
+  color: var(--blue);
+  background: #ffffff;
   border: none;
   border-radius: 10px;
   padding: 9px 16px;
   cursor: pointer;
   transition: transform 0.06s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-button:hover { box-shadow: 0 4px 14px rgba(0, 51, 173, 0.28); }
+button:hover { box-shadow: 0 4px 14px rgba(255, 255, 255, 0.30); }
 button:active { transform: translateY(1px); }
 button.ghost {
-  background: #fff;
-  color: var(--blue);
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
   border: 1px solid var(--line-2);
 }
-button.ghost:hover { border-color: var(--blue-2); box-shadow: none; }
+button.ghost:hover { border-color: #ffffff; box-shadow: none; }
 button.ghost.off { color: var(--muted); border-style: dashed; }
-button.stop { background: linear-gradient(135deg, #0b1f6b, var(--blue)); }
+button.stop { background: linear-gradient(135deg, #ffffff, #dce7ff); color: var(--blue); }
 
 a.ghost {
   display: inline-block;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--blue);
-  background: #fff;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.10);
   border: 1px solid var(--line-2);
   border-radius: 10px;
   padding: 9px 16px;
   text-decoration: none;
 }
 a.ghost:hover {
-  border-color: var(--blue-2);
-  box-shadow: 0 4px 14px rgba(0, 51, 173, 0.12);
+  border-color: #ffffff;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.18);
   text-decoration: none;
 }
 
@@ -333,7 +339,7 @@ a.ghost:hover {
 .settings {
   display: none;
   border-bottom: 1px solid var(--line);
-  background: #fbfcff;
+  background: rgba(255, 255, 255, 0.05);
   padding: 14px 16px;
 }
 .settings.open { display: block; }
@@ -392,19 +398,19 @@ a.ghost:hover {
   scroll-behavior: smooth;
 }
 .chat-log::-webkit-scrollbar { width: 8px; }
-.chat-log::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; }
+.chat-log::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); border-radius: 8px; }
 .chat-log::-webkit-scrollbar-track { background: transparent; }
 
 .msg { display: flex; }
 .msg.user { justify-content: flex-end; }
 .msg.user .bubble {
-  background: linear-gradient(135deg, var(--blue), var(--blue-2));
-  color: #fff;
+  background: #ffffff;
+  color: #0b1f6b;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 3px 10px rgba(0, 51, 173, 0.18);
+  box-shadow: 0 3px 10px rgba(1, 8, 40, 0.35);
 }
 .msg.ada .bubble {
-  background: #fff;
+  background: rgba(2, 16, 66, 0.55);
   border: 1px solid var(--line-2);
   border-bottom-left-radius: 4px;
   box-shadow: var(--shadow-2);
@@ -428,20 +434,20 @@ a.ghost:hover {
 .bubble code {
   font-family: var(--mono);
   font-size: 12.5px;
-  background: var(--chip);
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 1px 6px;
-  color: var(--navy);
+  color: #ffffff;
   word-break: break-all;
 }
 .msg.user .bubble code {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff;
+  background: rgba(0, 51, 173, 0.10);
+  border-color: rgba(0, 51, 173, 0.22);
+  color: #0b1f6b;
 }
 .bubble pre {
-  background: #f2f6ff;
+  background: rgba(1, 10, 45, 0.50);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
@@ -453,12 +459,12 @@ a.ghost:hover {
   border: none;
   padding: 0;
   font-size: 12.5px;
-  color: var(--navy);
+  color: var(--ink);
 }
-.bubble a { color: var(--blue); font-weight: 600; text-decoration: underline; }
-.msg.user .bubble a { color: #fff; }
-.bubble strong { color: var(--navy); }
-.msg.user .bubble strong { color: #fff; }
+.bubble a { color: #ffffff; font-weight: 600; text-decoration: underline; }
+.msg.user .bubble a { color: var(--blue); }
+.bubble strong { color: #ffffff; }
+.msg.user .bubble strong { color: #0b1f6b; }
 
 /* thinking dots */
 .msg.thinking .bubble { display: flex; gap: 5px; align-items: center; padding: 14px 16px; }
@@ -466,7 +472,7 @@ a.ghost:hover {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--blue-2);
+  background: #ffffff;
   animation: bounce 1.2s infinite ease-in-out;
 }
 .msg.thinking .dot:nth-child(2) { animation-delay: 0.15s; }
@@ -485,7 +491,7 @@ a.ghost:hover {
   align-items: flex-end;
   padding: 8px 12px;
   border-top: 1px solid var(--line);
-  background: #fbfcff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .input-row textarea {
@@ -493,8 +499,8 @@ a.ghost:hover {
   resize: none;
   font-family: var(--font);
   font-size: 12.5px;
-  color: var(--navy);
-  background: #fff;
+  color: #ffffff;
+  background: rgba(1, 10, 45, 0.45);
   border: 1px solid var(--line-2);
   border-radius: 10px;
   padding: 7px 11px;
@@ -504,8 +510,8 @@ a.ghost:hover {
   line-height: 1.35;
 }
 .input-row textarea:focus {
-  border-color: var(--blue-2);
-  box-shadow: 0 0 0 3px rgba(42, 90, 219, 0.12);
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
 }
 .input-row button { height: 34px; padding: 0 14px; }
 
@@ -513,16 +519,16 @@ a.ghost:hover {
   padding: 0 16px 10px;
   font-size: 11.5px;
   color: var(--muted);
-  background: #fbfcff;
+  background: rgba(255, 255, 255, 0.06);
 }
 .input-hint code {
   font-family: var(--mono);
   font-size: 11px;
-  background: var(--chip);
+  background: rgba(255, 255, 255, 0.10);
   border-radius: 5px;
   padding: 1px 5px;
   border: 1px solid var(--line);
-  color: var(--navy);
+  color: #ffffff;
 }
 
 /* ------------------------------ support ---------------------------- */
@@ -535,7 +541,7 @@ a.ghost:hover {
 .section-head { text-align: center; margin-bottom: 22px; }
 .section-head h2 {
   margin: 0 0 6px;
-  color: var(--navy);
+  color: #ffffff;
   font-size: clamp(24px, 4vw, 32px);
   letter-spacing: -0.01em;
 }
@@ -545,7 +551,7 @@ a.ghost:hover {
   display: grid;
   grid-template-columns: 220px 1fr;
   gap: 20px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(3, 20, 84, 0.62);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -571,7 +577,7 @@ a.ghost:hover {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: #ffffff;
   background: var(--chip);
   border: 1px solid var(--line-2);
   border-radius: 999px;
@@ -582,8 +588,8 @@ a.ghost:hover {
   display: block;
   font-family: var(--mono);
   font-size: 13px;
-  color: var(--navy);
-  background: #f2f6ff;
+  color: #ffffff;
+  background: rgba(1, 10, 45, 0.45);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
@@ -599,7 +605,7 @@ a.ghost:hover {
 .footer {
   margin-top: 64px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(2, 18, 78, 0.55);
   backdrop-filter: blur(8px);
   padding: 22px 20px 30px;
   text-align: center;
@@ -607,7 +613,7 @@ a.ghost:hover {
   color: var(--muted);
 }
 .footer .f-links { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
-.footer a { color: var(--blue); font-weight: 600; }
+.footer a { color: #ffffff; font-weight: 600; }
 
 /* ------------------------------- toast ----------------------------- */
 
@@ -616,13 +622,13 @@ a.ghost:hover {
   left: 50%;
   bottom: 26px;
   transform: translateX(-50%) translateY(20px);
-  background: var(--navy);
-  color: #fff;
+  background: #ffffff;
+  color: #0b1f6b;
   font-size: 13.5px;
   font-weight: 600;
   padding: 11px 20px;
   border-radius: 999px;
-  box-shadow: 0 8px 30px rgba(11, 31, 107, 0.35);
+  box-shadow: 0 8px 30px rgba(1, 8, 40, 0.50);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
