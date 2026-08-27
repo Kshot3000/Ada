@@ -51,6 +51,30 @@
   let rafId = 0;
   let last = 0;
 
+  /* Ada stays in front: the rain dims as it passes behind her head */
+  const faceCanvas = document.getElementById("ada-face");
+  const faceZone = { on: false, cx: 0, cy: 0, rx: 1, ry: 1 };
+  function updateFaceZone() {
+    if (!faceCanvas) { faceZone.on = false; return; }
+    let r;
+    try { r = faceCanvas.getBoundingClientRect(); } catch (e) { r = null; }
+    if (!r || !r.width || !r.height) { faceZone.on = false; return; }
+    faceZone.on = true;
+    faceZone.cx = r.left + r.width / 2;
+    faceZone.cy = r.top + r.height * 0.46; // Ada's head centre (face.js CY = H*0.46)
+    faceZone.rx = r.width * 0.62;
+    faceZone.ry = r.height * 0.70;
+  }
+  function zoneAlpha(x, y) {
+    if (!faceZone.on) return 1;
+    const dx = (x - faceZone.cx) / faceZone.rx;
+    const dy = (y - faceZone.cy) / faceZone.ry;
+    const d = dx * dx + dy * dy;
+    if (d >= 1) return 1;
+    const t = d * d * (3 - 2 * d); // smoothstep 0 (behind Ada) -> 1 (outside)
+    return 0.16 + 0.84 * t; // almost invisible directly behind her, full outside
+  }
+
   function rand(a, b) {
     return a + Math.random() * (b - a);
   }
@@ -83,6 +107,7 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
     last = now;
+    updateFaceZone();
 
     // fade the previous frame toward the blue base → glyph trails
     ctx.fillStyle = fadeGradient();
@@ -107,9 +132,11 @@
       }
 
       // head: bright; one step behind: mid; two steps: dim
-      drawGlyph(d.x, d.y, d.glyph, C_HEAD, 0.9);
-      drawGlyph(d.x, d.y - cell, pick(), C_MID, 0.45);
-      drawGlyph(d.x, d.y - cell * 2, pick(), C_DIM, 0.22);
+      // — all dimmed behind Ada's head so she reads clearly in front
+      const za = zoneAlpha(d.x, d.y);
+      drawGlyph(d.x, d.y, d.glyph, C_HEAD, 0.9 * za);
+      drawGlyph(d.x, d.y - cell, pick(), C_MID, 0.45 * za);
+      drawGlyph(d.x, d.y - cell * 2, pick(), C_DIM, 0.22 * za);
     }
 
     rafId = requestAnimationFrame(frame);
@@ -154,11 +181,14 @@
     ctx.fillRect(0, 0, W, H);
     ctx.font = "600 " + (cell - 3) + "px 'Cascadia Code','JetBrains Mono',Consolas,monospace";
     ctx.textBaseline = "top";
+    updateFaceZone();
     for (let i = 0; i < cols; i++) {
       const d = drops[i];
       if (d.gap > 100) continue;
-      drawGlyph(d.x, Math.min(d.y, H * 0.7), d.glyph, C_HEAD, 0.55);
-      drawGlyph(d.x, Math.min(d.y, H * 0.7) + cell, pick(), C_MID, 0.3);
+      const gy = Math.min(d.y, H * 0.7);
+      const za = zoneAlpha(d.x, gy);
+      drawGlyph(d.x, gy, d.glyph, C_HEAD, 0.55 * za);
+      drawGlyph(d.x, gy + cell, pick(), C_MID, 0.3 * za);
     }
   } else {
     start();

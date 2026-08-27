@@ -145,14 +145,18 @@ a:hover { text-decoration: underline; }
   position: absolute;
   left: 50%;
   top: 46%;
-  width: 130%;
+  width: 150%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
+  /* deep-blue stage clearing: the matrix rain is hidden behind Ada,
+     a pale rim separates her from the rain around the edge */
   background: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.06) 45%,
-    rgba(255, 255, 255, 0) 70%
+    #031556 0%,
+    #031556 55%,
+    rgba(3, 21, 86, 0.88) 70%,
+    rgba(255, 255, 255, 0.16) 82%,
+    rgba(255, 255, 255, 0) 94%
   );
   pointer-events: none;
 }
@@ -640,6 +644,52 @@ a.ghost:hover {
 
 /* ----------------------------- responsive -------------------------- */
 
+/* Desktop: Ada on the left, console on the right — her full face and
+   the input box are visible at the same time, no scrolling needed */
+@media (min-width: 1024px) {
+  main {
+    display: grid;
+    grid-template-columns: minmax(340px, 5fr) minmax(430px, 6fr);
+    grid-template-areas:
+      "ada console"
+      "support support";
+    column-gap: 30px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 16px 28px 0;
+  }
+  .hero {
+    grid-area: ada;
+    max-width: none;
+    margin: 0;
+    padding: 6px 0 0;
+  }
+  .hero-stage {
+    width: 100%;
+    max-width: 560px;
+    height: min(52vh, 560px);
+    margin: 10px auto 4px;
+  }
+  .kicker { margin-bottom: 10px; }
+  .hero h1 { margin: 8px 0 8px; font-size: clamp(26px, 2.4vw, 34px); }
+  .lede { font-size: 14px; margin: 0 auto 14px; }
+  .console {
+    grid-area: console;
+    max-width: none;
+    margin: 0;
+    height: clamp(560px, calc(100vh - 120px), 880px);
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-log { flex: 1 1 auto; height: auto; min-height: 110px; }
+  .support {
+    grid-area: support;
+    width: 100%;
+    max-width: 940px;
+    margin: 64px auto 0;
+  }
+}
+
 @media (max-width: 720px) {
   .brand-text em { display: none; }
   .topnav a { padding: 6px 9px; font-size: 12.5px; }
@@ -648,9 +698,10 @@ a.ghost:hover {
   .qr-box { max-width: 180px; margin: 0 auto; }
   .bubble { max-width: 88%; }
   .console-head { padding: 10px 12px; }
-  .chat-log { height: 46vh; min-height: 240px; padding: 14px 12px; }
+  .chat-log { height: 42vh; min-height: 220px; padding: 14px 12px; }
   .input-row { padding: 10px 12px; }
-  .hero-stage { width: min(400px, 96vw); height: clamp(340px, 55vh, 560px); }
+  .hero-stage { width: min(400px, 96vw); height: clamp(300px, 44vh, 430px); }
+  .lede { margin-bottom: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

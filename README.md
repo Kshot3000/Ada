@@ -80,7 +80,7 @@ Ada isn't a logo — she's a **procedural particle head**: a 3D point cloud (cra
 - **Emotions** — Ada's reply text is analyzed and she reacts with one of 9 expressions: `neutral`, `happy`, `excited`, `sad`, `surprised`, `thinking`, `talking`, `listening`, `confused`. Brows, eyes, mouth, and head tilt animate smoothly between states, and a small chip in the hero shows her current emotion.
 - **Alive** — she blinks every few seconds, her gaze follows your cursor, the head bobs gently, and her mouth moves while she speaks.
 - **Voice** — Ada reads her replies aloud with the Web Speech API (free, no API key). A female English voice is preferred when available. The **🔊 / 🔇** button in the console toggles speech, and the choice is remembered per browser.
-- **Matrix background** — a blue glyph rain (digits plus `₳ λ ∆`) drifts behind her head, themed to the deep-blue/white palette.
+- **Matrix background** — a glyph rain (digits plus `₳ λ ∆`) drifts *behind* her head — the rain dims as it passes under her, and a deep-blue stage clearing keeps her face clearly in front. On desktop she sits side-by-side with the chat console, so you can type to her and see her full face at the same time.
 
 Notes:
 
